@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>RCard PvP — Web Demo</title>
+<style>
+:root{--gold:#ffc75a;--panel:#172a31;--deep:#08141b;--text:#f6f1e6}
+*{box-sizing:border-box}body{margin:0;background:#08141b;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.app{width:min(100vw,480px);min-height:100dvh;margin:auto;position:relative;isolation:isolate;overflow:hidden;background:#08141b;padding-bottom:76px}.app::before{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(#07131b18,#08141b20),url("menu-village.jpg") center top / 100% auto repeat-y;pointer-events:none}
+/* Улучшенная графика: глубина сцены, подсветка и мягкие контуры */
+.app{filter:saturate(1.08)}
+.village{filter:contrast(1.06) saturate(1.12);transform:translateZ(0)}
+.panel{box-shadow:0 8px 24px #0003,inset 0 1px #ffffff0b;backdrop-filter:blur(5px)}
+.primary,.secondary,button{transition:transform .18s ease,filter .18s ease,box-shadow .18s ease}
+button:hover{filter:brightness(1.12);box-shadow:0 0 14px #9fdfff22}button:active{transform:scale(.98)}
+/* EVO — ультраредкая, выше легендарной */
+.case-item.evo,.crystal-reward-card.evo,.case-result.evo-result{border:2px solid #b7fff7!important;background:radial-gradient(ellipse at 50% 0%,#1b6d70,#16143c 55%,#090b1a)!important;box-shadow:0 0 18px #48ffe8aa,0 0 38px #9d54ff55,inset 0 0 24px #4bfff933!important;position:relative;overflow:hidden}
+.case-item.evo:before,.crystal-reward-card.evo:before,.case-result.evo-result:before{content:"";position:absolute;inset:-60%;background:conic-gradient(from 0deg,transparent 0 12%,#bfffff55 16%,transparent 22% 40%,#d6a5ff66 45%,transparent 52% 70%,#71fff066 76%,transparent 82%);animation:evo-spin 4s linear infinite;pointer-events:none}
+.case-item.evo>* ,.crystal-reward-card.evo>* ,.case-result.evo-result>*{position:relative;z-index:1}
+.evo-label{font-weight:1000;letter-spacing:3px;color:#d6fffb;text-shadow:0 0 8px #5dfff2,0 0 20px #9c5bff;animation:evo-pulse .8s ease-in-out infinite alternate}
+.evo-result .case-result-icon,.crystal-reward-card.evo .crystal-card-icon{filter:drop-shadow(0 0 12px #71fff5) drop-shadow(0 0 28px #a96bff);animation:evo-float 1s ease-in-out infinite alternate}
+@keyframes evo-spin{to{transform:rotate(360deg)}}@keyframes evo-pulse{to{filter:brightness(1.6);letter-spacing:4px}}@keyframes evo-float{to{transform:translateY(-5px) scale(1.08)}}
+/* Обновлённый вид экипировки: предметы читаются как конкретные доспехи и оружие */
+.gear-art{width:76px;height:76px;display:grid;place-items:center;position:relative;border-radius:18px;background:linear-gradient(145deg,#233d4a,#0a151f);border:1px solid #7193a5;box-shadow:inset 0 0 18px #72dfff18,0 6px 14px #0005;margin-bottom:3px}
+.gear-art .gear-art-icon{font-size:45px;line-height:1;filter:drop-shadow(0 5px 4px #0008) drop-shadow(0 0 7px #6bdcff55);transform:rotate(-8deg)}
+.gear-art.weapon .gear-art-icon{font-size:49px;transform:rotate(-28deg) scale(1.06)}
+.gear-art.armor .gear-art-icon{font-size:48px}.gear-art.helmet .gear-art-icon{font-size:47px}.gear-art.pants .gear-art-icon{font-size:44px}.gear-art.boots .gear-art-icon{font-size:43px}
+.gear-art.evo{border:2px solid #aafff5;background:radial-gradient(circle at 50% 20%,#247a83,#1c1741 62%,#080d18);box-shadow:0 0 14px #50fff0a8,0 0 30px #9a59ff55,inset 0 0 18px #9dfff455;animation:evo-float 1.25s ease-in-out infinite alternate}
+.gear-art.evo:before{content:"";position:absolute;inset:4px;border:1px solid #d6fffb88;border-radius:14px;transform:rotate(45deg) scale(.72);box-shadow:0 0 12px #7fffff77;pointer-events:none}
+.gear-art.evo:after{content:"EVO";position:absolute;bottom:-7px;right:-5px;padding:2px 5px;border-radius:6px;background:linear-gradient(90deg,#83fff0,#c49aff);color:#101329;font-size:9px;font-weight:1000;letter-spacing:1px;box-shadow:0 0 10px #7fffff88}
+.crystal-reward-card.gear-reward{padding:14px 8px 12px;min-height:205px;justify-content:flex-start;background:linear-gradient(150deg,#1b3543,#101623)}
+.crystal-reward-card.gear-reward.evo{background:radial-gradient(ellipse at 50% 0%,#245b68,#20153f 58%,#080b16)!important}
+.crystal-reward-card.gear-reward b{text-align:center}.crystal-reward-card.gear-reward small{text-align:center}
+.bag-item-card.gear-inventory-item{position:relative;overflow:hidden;background:linear-gradient(125deg,#142b39ee,#0a151fef)}
+.bag-item-card.gear-inventory-item .bag-item-icon{width:58px;height:64px;border:1px solid #6b9bad;background:linear-gradient(145deg,#24414e,#0a141d);font-size:37px;filter:drop-shadow(0 4px 5px #0007)}
+.bag-item-card.gear-inventory-item.evo{border:1px solid #9cfff3!important;box-shadow:0 0 18px #49f9e955,inset 0 0 24px #8052ff22;background:linear-gradient(115deg,#173d46,#1d1538 60%,#0a121d)}
+.bag-item-card.gear-inventory-item.evo .bag-item-icon{border-color:#a8fff5;box-shadow:0 0 15px #66fff055;animation:evo-float 1.4s ease-in-out infinite alternate}
+.bag-item-card.evo .rarity{color:#bafff7;text-shadow:0 0 8px #4dfff0}
+.equipment-slot.evo-equipped{border-color:#aafff5;background:radial-gradient(ellipse at 50% 0%,#20565d,#21163b 72%,#0b1820);box-shadow:0 0 18px #5cfff044,inset 0 0 20px #ac8bff22}
+.equipment-slot .slot-art{width:68px;height:68px;margin:0 auto 8px;display:grid;place-items:center;border-radius:17px;background:linear-gradient(145deg,#244653,#0a151f);border:1px solid #648c9c;box-shadow:inset 0 0 15px #7ce5ff14,0 4px 12px #0005}
+.equipment-slot .slot-art span{font-size:42px;filter:drop-shadow(0 4px 4px #0008) drop-shadow(0 0 7px #7deaff55)}
+.equipment-slot.evo-equipped .slot-art{border:2px solid #aafff5;box-shadow:0 0 18px #5cfff077,inset 0 0 18px #b7fff544;animation:evo-float 1.2s ease-in-out infinite alternate}
+@media(prefers-reduced-motion:reduce){.gear-art.evo,.equipment-slot.evo-equipped .slot-art,.bag-item-card.gear-inventory-item.evo .bag-item-icon{animation:none}}
+/* Дополнительная атмосферная глубина погодных режимов */
+.app.weather-rain .weather-layer{backdrop-filter:blur(.45px) saturate(.9)}
+.app.weather-storm .weather-layer{background-image:linear-gradient(180deg,#07152c55,#07152522 40%,#030a1a66);}
+.app.weather-sun .weather-layer{filter:saturate(1.2)}
+.app.weather-fog .village{filter:blur(.6px) saturate(.72)}
+.app.weather-moon .village{filter:brightness(.72) saturate(.78) contrast(1.12)}
+.app.weather-clouds .weather-layer{filter:saturate(.8)}
+/* Улучшенные многослойные погодные эффекты для главного меню */
+.weather-layer{position:absolute;z-index:1;inset:0;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .65s ease;isolation:isolate}
+.weather-layer:before,.weather-layer:after{content:"";position:absolute;inset:0;pointer-events:none}
+/* Объёмный дождь рисуется на canvas: мягкие капли с бликом, глубиной и брызгами, без повторяющихся полос */
+.weather-rain-canvas{position:absolute;inset:0;width:100%;height:100%;display:none;pointer-events:none;z-index:1}
+.app.weather-rain .weather-layer,.app.weather-storm .weather-layer{background-image:linear-gradient(180deg,#10243a20,transparent 42%,#07142138);}
+.app.weather-rain .weather-layer{opacity:.96}
+.app.weather-rain .weather-layer:before{background:linear-gradient(180deg,#102e4c15,transparent 38%,#0b1b2c30);box-shadow:inset 0 0 65px #07172c35}
+.app.weather-rain .weather-layer:after{background:radial-gradient(ellipse at 50% 60%,transparent 25%,#07172c18 100%)}
+.app.weather-storm .weather-layer{opacity:1;background-image:linear-gradient(180deg,#101a3c55,#07152535)}
+.app.weather-storm .weather-layer:before{background:linear-gradient(155deg,transparent 0 39%,#d9efff 39.2% 39.7%,transparent 40% 100%);opacity:0;animation:lightning-flash 8s infinite;filter:drop-shadow(0 0 12px #d8edff)}
+.app.weather-storm .weather-layer:before{background:linear-gradient(155deg,transparent 0 39%,#d9efff 39.2% 39.7%,transparent 40% 100%);opacity:0;animation:lightning-flash 8s infinite;filter:drop-shadow(0 0 12px #d8edff)}
+.app.weather-storm .weather-layer:after{background:#eaf6ff;opacity:0;animation:lightning-flash 8s infinite;mix-blend-mode:screen}
+/* Солнце: светящийся диск, лучи и тёплое атмосферное свечение */
+.app.weather-sun .weather-layer{opacity:1;background:radial-gradient(circle at 84% 9%,#fffbe8 0 13px,#fff5bd 14px 21px,#ffe59a55 22px 45px,transparent 75px),conic-gradient(from 10deg at 84% 9%,transparent 0 8deg,#fff2 9deg 10deg,transparent 11deg 24deg,#fff2 25deg 26deg,transparent 27deg 43deg,#fff2 44deg 45deg,transparent 46deg 64deg,#fff2 65deg 66deg,transparent 67deg 100deg),linear-gradient(180deg,#ffdf8a15,transparent 48%)}
+.app.weather-sun .weather-layer:before{background:linear-gradient(115deg,transparent 25%,#fff2 42%,transparent 46%),linear-gradient(130deg,transparent 55%,#fff3 57%,transparent 59%);animation:sun-glow 6s ease-in-out infinite alternate}
+/* Луна: ночь заметно темнее, серебристый диск и мягкий лунный свет на фоне */
+.app.weather-moon .weather-layer{opacity:1;background:linear-gradient(180deg,#050b20a8 0%,#09152e7d 42%,#07101f9c 100%),radial-gradient(ellipse at 82% 12%,#c7dcff25 0,transparent 30%),radial-gradient(circle at 82% 9%,#fffef0 0 15px,#e5e9df 16px 19px,#c9dcff66 20px 29px,#9db9ff20 30px 54px,transparent 76px),radial-gradient(circle at 79% 7%,#fff 0 1px,transparent 2px),radial-gradient(circle at 91% 16%,#fff 0 1.5px,transparent 2.5px),radial-gradient(circle at 67% 12%,#dfeaff 0 1px,transparent 2px),radial-gradient(circle at 48% 6%,#fff 0 1px,transparent 2px),radial-gradient(circle at 28% 18%,#fff 0 1px,transparent 2px)}
+.app.weather-moon .weather-layer:before{background:radial-gradient(ellipse at 82% 12%,#b7d0ff25 0,transparent 29%),linear-gradient(158deg,transparent 0 17%,#d7e5ff08 25%,#c8dcff16 36%,#d7e5ff08 48%,transparent 61%),radial-gradient(ellipse at 78% 28%,#b5ceff12,transparent 44%);transform-origin:82% 10%;animation:moon-breathe 5s ease-in-out infinite alternate}
+.app.weather-moon .weather-layer:after{background:linear-gradient(180deg,#03081718,#02071425),radial-gradient(ellipse at 82% 10%,#e2edff16 0,transparent 19%);box-shadow:inset 0 0 90px #02071355;animation:moon-breathe 7s ease-in-out infinite alternate-reverse}
+/* Туман: несколько полупрозрачных полос, движущихся на разной скорости */
+.app.weather-fog .weather-layer{opacity:.94;background:linear-gradient(180deg,#b9d0d733,#dce6e877 40%,#d3e0dd66 70%,#b7c9cc55);backdrop-filter:blur(2px)}
+.app.weather-fog .weather-layer:before{inset:10% -45%;background:repeating-linear-gradient(0deg,transparent 0 34px,#f4f8f2a0 45px 76px,transparent 91px 132px);filter:blur(12px);animation:fog-drift 13s ease-in-out infinite alternate}
+.app.weather-fog .weather-layer:after{inset:38% -35%;background:linear-gradient(90deg,transparent,#edf4f0a8 28%,#f8faf5b5 53%,transparent 86%);filter:blur(17px);animation:fog-drift 19s ease-in-out infinite alternate-reverse}
+/* Облака: мягкие многослойные облачные массы */
+.app.weather-clouds .weather-layer{opacity:.92;background:radial-gradient(ellipse 100px 34px at 14% 13%,#fff9 0 42%,#e8f2f2a8 58%,transparent 75%),radial-gradient(ellipse 115px 43px at 24% 12%,#f8fbf8ee 0 35%,#e5eeeeaa 61%,transparent 76%),radial-gradient(ellipse 120px 39px at 63% 19%,#f7faf9d9 0 40%,#e1e9edaa 62%,transparent 77%),radial-gradient(ellipse 95px 32px at 79% 16%,#fff9 0 40%,transparent 75%),radial-gradient(ellipse 150px 50px at 105% 25%,#eef4f5cc 0 44%,transparent 75%);animation:cloud-drift 20s ease-in-out infinite alternate}
+.app.weather-clouds .weather-layer:before{background:radial-gradient(ellipse 130px 42px at 45% 8%,#fff5 0 45%,transparent 75%),radial-gradient(ellipse 100px 30px at 4% 26%,#fff6 0 40%,transparent 75%);filter:blur(3px);animation:cloud-drift 28s ease-in-out infinite alternate-reverse}
+@keyframes rain-fall{from{background-position:0 -20px,0 -40px}to{background-position:-35px 150px,-50px 190px}}
+@keyframes lightning-flash{0%,89%,91%,94%,100%{opacity:0}90%,92%{opacity:.78}}
+@keyframes fog-drift{from{transform:translateX(-5%)}to{transform:translateX(5%)}}
+@keyframes cloud-drift{from{transform:translateX(-4%)}to{transform:translateX(4%)}}
+@keyframes sun-glow{from{opacity:.5}to{opacity:1}}
+@keyframes moon-breathe{from{opacity:.4}to{opacity:1}}
+/* Дополнительная глубина атмосферы: дальние слои, световые объёмы и движение */
+.weather-depth{position:absolute;inset:-8%;z-index:0;pointer-events:none;opacity:0;transition:opacity .8s ease;mix-blend-mode:screen}
+.app.weather-sun .weather-depth{opacity:1;background:radial-gradient(ellipse at 84% 9%,#fff7c65c 0,transparent 22%),conic-gradient(from 150deg at 84% 9%,transparent 0deg,#fff2 8deg,transparent 17deg,transparent 27deg,#fff1 35deg,transparent 45deg,transparent 66deg,#fff2 73deg,transparent 82deg);animation:sun-volume 9s ease-in-out infinite alternate}
+.app.weather-rain .weather-depth{opacity:.8;background:linear-gradient(115deg,transparent 8%,#a5d9ff08 24%,transparent 38%),linear-gradient(72deg,transparent 55%,#c4e7ff0a 68%,transparent 78%),radial-gradient(ellipse at 50% 85%,#7aa8c51c,transparent 55%)}
+.app.weather-storm .weather-depth{opacity:1;background:radial-gradient(ellipse at 70% 22%,#8eabff18,transparent 34%),linear-gradient(165deg,transparent 18%,#b6d9ff0a 40%,transparent 52%);animation:storm-atmosphere 8s ease-in-out infinite}
+.app.weather-moon .weather-depth{opacity:1;background:radial-gradient(ellipse at 82% 12%,#d6e5ff3b 0,transparent 27%),conic-gradient(from 145deg at 82% 12%,transparent 0deg,#dbe8ff12 18deg,transparent 32deg,transparent 52deg,#dbe8ff0c 66deg,transparent 83deg),radial-gradient(ellipse at 70% 55%,#7eabff0a,transparent 58%);animation:moon-rays 8s ease-in-out infinite alternate}
+.app.weather-fog .weather-depth{opacity:.92;background:linear-gradient(180deg,transparent 12%,#edf5f3a0 35%,#e8f2f155 47%,transparent 59%),linear-gradient(0deg,#d6e5e633,transparent 48%);filter:blur(13px);animation:fog-depth 17s ease-in-out infinite alternate}
+.app.weather-clouds .weather-depth{opacity:.95;background:radial-gradient(ellipse 180px 65px at 18% 19%,#f7fbf8a0 0 28%,#dce8ed75 48%,transparent 73%),radial-gradient(ellipse 220px 72px at 76% 29%,#f6f9f9a0 0 27%,#d9e4ed55 49%,transparent 72%),radial-gradient(ellipse 180px 55px at 48% 9%,#fff7 0 25%,transparent 72%);filter:blur(5px);animation:cloud-depth 27s ease-in-out infinite alternate}
+@keyframes sun-volume{from{transform:translate(-1%,0) scale(1);opacity:.55}to{transform:translate(1%,1%) scale(1.05);opacity:1}}
+@keyframes storm-atmosphere{0%,100%{opacity:.35;transform:translateX(-1%)}50%{opacity:.9;transform:translateX(1%)}}
+@keyframes moon-rays{from{transform:scale(1);opacity:.55}to{transform:scale(1.06);opacity:1}}
+@keyframes fog-depth{from{transform:translateX(-6%) translateY(1%)}to{transform:translateX(7%) translateY(-2%)}}
+@keyframes cloud-depth{from{transform:translateX(-5%) translateY(0)}to{transform:translateX(5%) translateY(2%)}}
+@media(prefers-reduced-motion:reduce){.weather-depth,.weather-layer,.weather-layer:before,.weather-layer:after{animation-duration:8s}}
+.sky{display:none;height:34vh;min-height:210px;position:absolute;inset:0 0 auto;background:linear-gradient(#69bdce,#c4d9c1);z-index:0}
+.mountain{display:none;position:absolute;top:20vh;left:-15%;width:130%;height:24vh;background:#617e72;clip-path:polygon(0 100%,10% 50%,18% 67%,31% 5%,46% 68%,58% 22%,72% 73%,84% 17%,100% 100%);opacity:.8}
+.village{display:none;position:absolute;top:31vh;left:0;right:0;height:30vh;background:linear-gradient(transparent,#173c31)}
+.hud{position:relative;z-index:3;background:#07131beF;padding:10px;display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;border-bottom:1px solid #c58c3c}
+.settings-quick{position:absolute;right:9px;top:9px;width:32px;height:32px;padding:0;border:1px solid #c9954c;border-radius:7px;background:#18313a;color:#ffe0a0;font-size:17px;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 5px #0007;z-index:4}.mail-quick{position:absolute;right:9px;top:47px;width:32px;height:32px;padding:0;border:1px solid #79c7e8;border-radius:7px;background:linear-gradient(145deg,#1d5365,#142b3a);color:#e6f8ff;font-size:17px;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 8px #0008;z-index:4}.mail-quick.has-unread{animation:mail-pulse 2s ease-in-out infinite}.mail-badge{position:absolute;right:-5px;top:-5px;min-width:15px;height:15px;padding:0 3px;border-radius:9px;background:#e64b3e;color:white;font-size:9px;font-weight:900;display:grid;place-items:center;border:1px solid #ffe0c0}.mail-card{display:grid;grid-template-columns:42px 1fr;gap:10px;padding:12px;margin:9px 0;border:1px solid #466574;border-radius:12px;background:linear-gradient(125deg,#1b3544,#101e2b)}.mail-card.unread{border-color:#69c8ed;box-shadow:inset 0 0 18px #39b9ff12}.mail-card.claimed{opacity:.65}.mail-icon{font-size:29px;display:grid;place-items:center}.mail-card h3{margin:0 0 4px;font-size:14px;color:#ffe0a0}.mail-card p{margin:0 0 8px;font-size:12px;color:#c9d9e0}.mail-meta{font-size:10px;color:#89b9ca;margin-bottom:7px}.mail-action{border:1px solid #73c9ec;border-radius:8px;background:#173e50;color:#e8f8ff;padding:7px 10px;font-weight:800;cursor:pointer}.mail-action:disabled{opacity:.65;cursor:default}@keyframes mail-pulse{0%,100%{box-shadow:0 2px 8px #0008,0 0 0 #5bd6ff00}50%{box-shadow:0 2px 8px #0008,0 0 14px #5bd6ff99}}.curr{padding-right:35px}.avatar{overflow:visible;flex-shrink:0;position:relative}.avatar img{border-radius:8px;overflow:hidden}.avatar-frame-bronze{border:3px solid #bd8750!important;box-shadow:0 0 0 2px #59351e,0 0 10px #d49a4b66!important;background:linear-gradient(135deg,#6b3e24,#e3b66d,#6b3e24)!important}.avatar-frame-silver{border:3px solid #d9e5f2!important;box-shadow:0 0 0 2px #647d99,0 0 12px #9fd7ff99!important;background:linear-gradient(135deg,#647b91,#f0f8ff,#6d8da7)!important}.avatar-frame-emerald{border:3px solid #63efbd!important;box-shadow:0 0 0 2px #145747,0 0 14px #37ffc488!important;background:linear-gradient(135deg,#0c5b4a,#8bffd2,#14513e)!important}.avatar-frame-arcane{border:3px solid #c78aff!important;box-shadow:0 0 0 2px #542d84,0 0 15px #a855f7bb!important;background:linear-gradient(135deg,#43206c,#e3a4ff,#522c88)!important}.avatar-frame-legendary{border:3px solid #ffe38a!important;box-shadow:0 0 0 2px #8c5419,0 0 7px #ffd45a,0 0 20px #ffad28aa!important;background:conic-gradient(from 0deg,#fff0a1,#b96b19,#fff0a1,#6f3b10,#fff0a1)!important;animation:frame-legendary-glow 2s ease-in-out infinite alternate}@keyframes frame-legendary-glow{from{filter:drop-shadow(0 0 3px #ffbd3e)}to{filter:drop-shadow(0 0 10px #fff0a1)}}.avatar img,.profile-big-avatar img{width:100%;height:100%;object-fit:cover;display:block}.avatar{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#b75b31,#f2bf63);display:grid;place-items:center;font-size:27px;border:2px solid var(--gold)}
+.brand{font-weight:900;letter-spacing:1px;font-size:15px}.sub{font-size:11px;color:#bed1d4}.curr{font-size:12px;text-align:right;color:var(--gold);line-height:1.8;white-space:nowrap}
+.content{position:relative;z-index:2;padding:12px 12px 20px;background:linear-gradient(#07131b24,#07131b30)}.title{text-align:center;font-weight:900;letter-spacing:1px;font-size:23px;text-shadow:0 2px 3px #14201b}.subtitle{text-align:center;font-size:13px;color:#f1f2d8;margin:3px 0 12px}
+.village-art{display:none!important;height:0;position:relative;margin:0}
+.pagoda{width:160px;height:145px;position:relative;filter:drop-shadow(0 8px 5px #0b241c88)}
+.roof{position:absolute;left:0;width:100%;height:30px;background:#a84c24;clip-path:polygon(0 75%,15% 40%,28% 0,72% 0,85% 40%,100% 75%,78% 68%,65% 48%,35% 48%,22% 68%);border-bottom:2px solid #f5bc58}
+.roof.r1{top:5px}.roof.r2{top:48px;transform:scale(.82);left:9%}.roof.r3{top:91px;transform:scale(.68);left:16%}
+.tower{position:absolute;top:19px;bottom:0;left:25%;width:50%;background:repeating-linear-gradient(90deg,#d4b77a 0 10px,#7b4b31 10px 13px);border:4px solid #70452d}
+.door{position:absolute;bottom:0;left:38%;width:24%;height:38px;background:#30251e;border:3px solid #e6bd6a;border-bottom:0}
+.tree{position:absolute;bottom:20px;font-size:76px;filter:drop-shadow(0 4px 2px #13251c)}.tree.left{left:0}.tree.right{right:0}
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.feature{min-height:76px;border:1px solid #b98540;border-radius:10px;background:linear-gradient(135deg,#203d42ed,#10232bed);color:white;padding:10px;text-align:left;box-shadow:0 3px 0 #071218;cursor:pointer}
+.feature strong{display:block;color:var(--gold);font-size:13px}.feature span{font-size:11px;color:#d1ddda}.feature .ico{float:left;font-size:23px;margin-right:8px}.wide{grid-column:1/-1}
+.team-title{text-align:center;color:var(--gold);font-weight:800;margin:14px 0 8px;font-size:13px}.team{display:flex;gap:5px}.hero-chip{flex:1;min-width:0;text-align:center;border:1px solid #b9843e;border-radius:8px;background:#493323;padding:7px 2px;font-size:10px;font-weight:800}.hero-chip small{display:block;color:#f5d8a2;font-size:9px}
+.primary{width:100%;margin-top:12px;border:0;border-radius:10px;padding:14px;background:linear-gradient(#e45b34,#9b2f20);color:#fff;font-weight:900;font-size:16px;box-shadow:0 4px 0 #5b1e19;cursor:pointer}
+.nav{position:fixed;z-index:5;bottom:0;left:50%;transform:translateX(-50%);width:min(100vw,480px);height:70px;background:#07131bf5;border-top:1px solid #bc8845;display:grid;grid-template-columns:repeat(5,1fr);padding:5px 2px}
+.nav button{background:transparent;border:0;color:#c6d0cf;font-size:10px;font-weight:700;cursor:pointer}.nav button b{display:block;font-size:22px;margin-bottom:1px}.nav button.active{color:var(--gold)}
+.panel{background:#11262eeb;border:1px solid #b98540;border-radius:12px;padding:14px;margin-top:12px}.hero-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:#203840;border-radius:8px;padding:10px;margin:7px 0}.rarity{font-size:10px;color:var(--gold)}.hero-row button,.secondary{background:#bd7833;border:0;border-radius:7px;padding:8px 10px;color:#fff;font-weight:800}
+.log{white-space:pre-line;line-height:1.7;font-size:14px}.bar{height:9px;background:#512a2b;border-radius:9px;overflow:hidden;margin:5px 0 10px}.bar i{display:block;height:100%;background:#e35d50}.notice{position:fixed;z-index:9;inset:0;background:#0009;display:grid;place-items:center;padding:22px}.notice>div{width:min(100%,400px);background:#13272f;border:1px solid var(--gold);border-radius:14px;padding:20px;text-align:center}.notice h2{color:var(--gold);margin-top:0}
+
+/* Портреты ниндзя и анимация ударов */
+.portrait{width:62px;height:62px;min-width:62px;border-radius:15px;display:grid;place-items:center;font-size:34px;background:linear-gradient(145deg,#46567d,#151b30);border:2px solid #e9bd63;box-shadow:inset 0 0 14px #ffffff12;position:relative}
+.fighter-line{display:flex;align-items:center;justify-content:space-around;gap:8px;margin:14px 0}
+.fighter{width:43%;text-align:center;position:relative;transition:transform .24s ease}
+.fighter .portrait{width:78px;height:78px;margin:0 auto 7px;font-size:44px}
+.fighter-name{font-weight:900;font-size:12px}
+.fighter-hp{height:9px;background:#34394a;border-radius:99px;overflow:hidden;margin:6px 0}
+.fighter-hp i{display:block;height:100%;background:#61d48b;transition:width .25s}
+.fighter.enemy .fighter-hp i{background:#ff6879}
+.vs-mark{font-size:20px;font-weight:1000;color:#f4c86a}
+.fighter.attacking{transform:translateX(17px) scale(1.08)}
+.fighter.enemy.attacking{transform:translateX(-17px) scale(1.08)}
+.fighter.hit{animation:hitShake .3s}
+.damage-pop{position:absolute;left:50%;top:4px;transform:translateX(-50%);font-size:23px;font-weight:1000;color:#ffe27c;text-shadow:0 2px 5px #000;animation:damageFloat .7s forwards;pointer-events:none}
+@keyframes hitShake{0%,100%{filter:none}30%{filter:brightness(2);transform:translateX(-4px)}70%{filter:brightness(1.5);transform:translateX(4px)}}
+@keyframes damageFloat{from{opacity:1;top:5px}to{opacity:0;top:-28px}}
+.team-portrait{display:flex;align-items:center;gap:8px;background:#ffffff09;border-radius:10px;padding:6px;margin:5px 0}
+.team-portrait .portrait{width:42px;height:42px;min-width:42px;font-size:24px;border-radius:10px}
+.battle-log{min-height:72px;max-height:125px;overflow:auto;background:#0a1520;border-radius:10px;padding:11px;line-height:1.55;font-size:13px}
+
+
+.avatar-choice{cursor:pointer;transition:transform .12s}.avatar-choice:active{transform:scale(.93)}.profile-trigger{cursor:pointer;color:inherit;padding:0;transition:transform .15s,filter .15s}
+.profile-trigger:active{transform:scale(.94);filter:brightness(1.2)}
+.profile-modal{position:fixed;z-index:20;inset:0;background:#02070bdc;display:grid;place-items:center;padding:18px;backdrop-filter:blur(5px)}
+.profile-card{width:min(100%,390px);max-height:88vh;overflow:auto;background:linear-gradient(160deg,#18343b,#0a1722);border:1px solid #e7b85d;border-radius:20px;box-shadow:0 20px 70px #000b;padding:18px;color:#f5f2e8}
+.profile-top{display:flex;align-items:center;gap:14px;margin:4px 0 18px}
+.profile-big-avatar{width:78px;height:78px;flex-shrink:0;position:relative;border-radius:20px;display:grid;place-items:center;font-size:46px;background:linear-gradient(135deg,#a8482d,#f0c86b);border:3px solid #e8ba60}
+.profile-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}
+.profile-stat{background:#ffffff0a;border:1px solid #ffffff13;border-radius:12px;padding:12px}
+.profile-stat b{display:block;color:#f3c768;font-size:19px;margin-top:4px}
+.profile-section{border-top:1px solid #ffffff20;padding-top:12px;margin-top:12px}
+.profile-close{width:100%;margin-top:14px}
+
+
+
+/* Расширенная кинематографичная анимация открытия сундуков */
+.case-overlay.chest-cinematic{isolation:isolate;overflow:hidden;animation:chest-scene-in .45s ease-out both}
+.case-overlay.chest-cinematic:after{content:"";position:absolute;z-index:-1;inset:-35%;pointer-events:none;background:conic-gradient(from 0deg,transparent 0 7%,var(--chest-aura,#ffd36b22) 9%,transparent 13% 24%,var(--chest-aura,#ffd36b22) 27%,transparent 31% 43%,var(--chest-aura,#ffd36b22) 46%,transparent 50%);animation:chest-portal-spin 13s linear infinite;mask-image:radial-gradient(ellipse at center,#000 0 30%,transparent 70%)}
+.case-overlay.chest-cinematic .case-opening-art{position:relative;z-index:1;animation:chest-charge-up .85s cubic-bezier(.2,.8,.2,1) both,case-chest-charge 1.1s ease-in-out .85s infinite alternate}
+.case-overlay.chest-cinematic .case-opening-art:before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:1.8em;height:1.8em;border:2px solid var(--chest-ring,#ffd36b);border-radius:50%;transform:translate(-50%,-50%) scale(.2);box-shadow:0 0 25px var(--chest-ring,#ffd36b),inset 0 0 20px var(--chest-ring,#ffd36b);animation:chest-shockwave 1.35s ease-out infinite}
+.case-overlay.chest-cinematic .case-heading{animation:chest-heading-arrive .65s cubic-bezier(.2,1.3,.3,1) both}
+.case-overlay.chest-cinematic .crystal-results-grid,.case-overlay.chest-cinematic .case-track-wrap{position:relative;z-index:2}
+.case-overlay.chest-cinematic .case-subtitle{animation:chest-subtitle-in .55s ease-out both}
+.chest-fx-spark{position:fixed;z-index:33;left:var(--x);top:var(--y);width:var(--size);height:var(--size);border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fff 0 8%,var(--spark-color) 30%,transparent 72%);filter:drop-shadow(0 0 7px var(--spark-color));animation:chest-spark-fly var(--dur) cubic-bezier(.12,.65,.25,1) forwards}
+.chest-fx-spark:after{content:"";position:absolute;left:45%;top:-160%;width:10%;height:420%;background:linear-gradient(transparent,#fff,var(--spark-color),transparent);transform:rotate(35deg)}
+@keyframes chest-scene-in{from{opacity:0;filter:brightness(.4) blur(5px)}to{opacity:1;filter:brightness(1) blur(0)}}
+@keyframes chest-portal-spin{to{transform:rotate(360deg)}}
+@keyframes chest-charge-up{0%{transform:translateY(35px) scale(.35);filter:brightness(.4) drop-shadow(0 0 0 var(--chest-ring,#ffd36b))}65%{transform:translateY(-8px) scale(1.18);filter:brightness(1.8) drop-shadow(0 0 35px var(--chest-ring,#ffd36b))}100%{transform:translateY(0) scale(1);filter:brightness(1.2) drop-shadow(0 0 24px var(--chest-ring,#ffd36b))}}
+@keyframes chest-shockwave{0%{opacity:.9;transform:translate(-50%,-50%) scale(.2)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.6)}}
+@keyframes chest-heading-arrive{from{opacity:0;transform:translateY(-18px);letter-spacing:7px}to{opacity:1;transform:translateY(0);letter-spacing:1px}}
+@keyframes chest-subtitle-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes chest-spark-fly{0%{opacity:0;transform:translate(0,0) scale(.2)}12%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.05)}}
+.case-overlay.legendary-hit.chest-cinematic:after{--chest-aura:#ffd36b38;animation-duration:7s}
+.case-overlay.crystal-case-overlay.chest-cinematic{--chest-ring:#65d7ff;--chest-aura:#65d7ff24}
+.case-overlay.crystal-case-overlay.chest-cinematic:after{--chest-aura:#a36dff35}
+@media(prefers-reduced-motion:reduce){.case-overlay.chest-cinematic,.case-overlay.chest-cinematic:after,.case-overlay.chest-cinematic .case-opening-art,.case-overlay.chest-cinematic .case-opening-art:before,.case-overlay.chest-cinematic .case-heading,.case-overlay.chest-cinematic .case-subtitle,.chest-fx-spark{animation:none!important}}
+
+/* Сундук: эффект прокрутки наград в стиле игровых кейсов */
+.treasure-chest{font-size:88px;display:inline-block;filter:drop-shadow(0 0 10px #ffca4d99);animation:chest-float 2s ease-in-out infinite;transform-origin:50% 80%}
+.treasure-chest:hover{filter:drop-shadow(0 0 22px #ffd36b)}
+@keyframes chest-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
+@keyframes chest-open{0%{transform:scale(1) rotate(0);filter:drop-shadow(0 0 8px #ffd36b)}25%{transform:scale(1.12) rotate(-8deg)}50%{transform:scale(1.18) rotate(8deg);filter:drop-shadow(0 0 35px #fff0a6)}75%{transform:scale(1.12) rotate(-4deg)}100%{transform:scale(1) rotate(0)}}
+.chest-opening{animation:chest-open .9s ease-in-out 2!important}
+.reward-glow{color:#ffe08a;text-shadow:0 0 12px #ffb700,0 0 25px #ff8c00;animation:reward-pulse 1.1s ease-in-out infinite alternate}
+@keyframes reward-pulse{from{transform:scale(1)}to{transform:scale(1.08)}}
+.case-overlay{position:fixed;z-index:30;inset:0;background:radial-gradient(ellipse at center,#183440f5,#02070bf7 75%);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:18px;color:#fff;text-align:center}
+.case-heading{font-weight:1000;font-size:21px;color:#ffd36b;letter-spacing:1px;margin-bottom:18px;text-shadow:0 0 18px #ffb52c66}
+.case-track-wrap{position:relative;width:min(100%,440px);overflow:hidden;border:2px solid #b8873b;border-radius:12px;background:linear-gradient(180deg,#142a36,#050b12);box-shadow:0 0 22px #ffc24a22,inset 0 0 24px #000b;animation:reel-arrive .7s ease-out both}
+.case-opening-art{font-size:64px;line-height:1;margin:0 0 12px;filter:drop-shadow(0 0 9px #ffca4d99);animation:case-chest-charge 1.1s ease-in-out infinite alternate}
+.case-opening-art:after{content:"✦";position:absolute;font-size:24px;color:#fff0a1;text-shadow:0 0 15px #ffbd32;animation:case-spark 1.3s linear infinite}
+@keyframes case-chest-charge{from{transform:translateY(0) scale(.96);filter:drop-shadow(0 0 8px #ffca4d66)}to{transform:translateY(-5px) scale(1.06);filter:drop-shadow(0 0 28px #ffca4d)}}
+@keyframes case-spark{0%{transform:translate(28px,0) scale(.4);opacity:0}50%{opacity:1}100%{transform:translate(-26px,-30px) scale(1.1);opacity:0}}
+@keyframes reel-arrive{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.case-track-wrap:before{content:"";position:absolute;z-index:2;left:50%;top:0;bottom:0;width:3px;transform:translateX(-50%);background:#fff5a5;box-shadow:0 0 12px 4px #ffb52c;pointer-events:none}
+.case-track{display:flex;gap:8px;padding:12px;transform:translateX(0);will-change:transform}
+.case-item{flex:0 0 94px;height:116px;border:1px solid #53717b;border-bottom:4px solid #78909c;border-radius:8px;background:linear-gradient(160deg,#263b48,#0d1b25);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:5px;overflow:hidden}
+.case-item.rare{border-color:#5bb8ff;border-bottom-color:#5bb8ff;background:linear-gradient(160deg,#16456a,#0b1728);box-shadow:inset 0 0 18px #279dff35}.case-item.epic{border-color:#a66aff;border-bottom-color:#a66aff;background:linear-gradient(160deg,#42285f,#17172b)}.case-item.legendary{border-color:#ffbd42;border-bottom-color:#ffbd42;background:linear-gradient(160deg,#6a4316,#211a19);box-shadow:inset 0 0 18px #ffb52b22}
+.case-item .case-icon{font-size:35px}.case-item small{font-size:9px;line-height:1.2;color:#e7e6df}
+.case-subtitle{font-size:12px;color:#c3d2d8;margin:14px 0}.case-result{animation:case-result-pop .65s cubic-bezier(.18,.9,.25,1.3) both}.case-result-icon{font-size:76px;filter:drop-shadow(0 0 24px #ffcf56);animation:reward-pulse .8s infinite alternate}
+@keyframes case-result-pop{from{opacity:0;transform:scale(.45) translateY(24px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.case-flash{position:fixed;z-index:31;inset:0;pointer-events:none;background:#fff4bf;animation:case-flash .65s ease-out forwards}@keyframes case-flash{0%{opacity:0}15%{opacity:.9}100%{opacity:0}}
+.case-overlay.evo-hit{background:radial-gradient(ellipse at center,#174b59fa 0%,#21133afa 43%,#02030b 100%);overflow:hidden}
+.case-overlay.evo-hit:before{content:"";position:absolute;inset:-50%;pointer-events:none;background:conic-gradient(from 0deg,transparent 0 5%,#8efff244 7%,transparent 12% 22%,#c28aff44 25%,transparent 30% 45%,#8efff244 48%,transparent 54%);animation:legendary-rays 3s linear infinite}
+.case-overlay.evo-hit .case-heading{color:#d8fffb;text-shadow:0 0 12px #4bfff1,0 0 32px #a76aff;animation:legendary-title .45s ease-in-out infinite alternate}
+.case-overlay.evo-hit .case-track-wrap{border-color:#8efff2;box-shadow:0 0 28px #4bfff1,0 0 65px #a76affaa}
+/* Legendary reward reveal */
+.case-overlay.legendary-hit{background:radial-gradient(ellipse at center,#5c3a0df7 0%,#190f25fa 48%,#020307 100%);overflow:hidden}
+.case-overlay.legendary-hit:before{content:"";position:absolute;inset:-50%;pointer-events:none;background:conic-gradient(from 0deg,transparent 0 8%,#ffd56a20 10%,transparent 14% 25%,#fff1a633 27%,transparent 31% 45%,#ffb52c22 47%,transparent 52%);animation:legendary-rays 8s linear infinite}
+.case-overlay.legendary-hit .case-heading{color:#fff0a3;font-size:clamp(21px,5vw,30px);text-shadow:0 0 10px #ffb52c,0 0 28px #ff8c00;animation:legendary-title .8s ease-in-out infinite alternate}
+.case-overlay.legendary-hit .case-track-wrap{border-color:#ffe17a;box-shadow:0 0 18px #ffc34d,0 0 48px #ff9e1b88}
+.case-result.legendary-result{position:relative;padding:18px 26px;border:2px solid #ffd36b;border-radius:18px;background:linear-gradient(145deg,#4b310deF,#140f1cF2);box-shadow:0 0 28px #ffc34d88,inset 0 0 30px #ffcf4b22;animation:legendary-arrive .8s cubic-bezier(.2,1.4,.3,1) both}
+.legendary-result:before,.legendary-result:after{content:"✦  ✧  ✦  ✧  ✦";display:block;color:#ffe99b;letter-spacing:8px;font-size:16px;animation:legendary-title .6s ease-in-out infinite alternate}
+.legendary-result .case-result-icon{font-size:clamp(78px,20vw,112px);filter:drop-shadow(0 0 12px #ffcf56) drop-shadow(0 0 36px #ff9d00);animation:legendary-icon .7s ease-in-out infinite alternate}
+.legendary-banner{font-size:clamp(22px,6vw,34px);font-weight:1000;letter-spacing:2px;color:#fff1a8;text-shadow:0 0 8px #ffbd35,0 0 22px #ff8700;margin:5px 0 10px;animation:legendary-title .55s ease-in-out infinite alternate}
+.legendary-particle{position:fixed;z-index:32;pointer-events:none;color:#ffdf72;text-shadow:0 0 10px #ffb52c;animation:particle-rise var(--dur,2s) ease-out forwards;font-size:var(--size,20px)}
+@keyframes legendary-rays{to{transform:rotate(360deg)}}@keyframes legendary-title{from{filter:brightness(1);transform:scale(1)}to{filter:brightness(1.45);transform:scale(1.035)}}@keyframes legendary-arrive{0%{opacity:0;transform:scale(.2) rotate(-8deg)}65%{opacity:1;transform:scale(1.08) rotate(2deg)}100%{transform:scale(1) rotate(0)}}@keyframes legendary-icon{from{transform:scale(.96) rotate(-3deg)}to{transform:scale(1.08) rotate(3deg)}}@keyframes particle-rise{0%{opacity:0;transform:translateY(25px) scale(.4) rotate(0)}15%{opacity:1}100%{opacity:0;transform:translateY(-180px) scale(1.3) rotate(180deg)}}
+@media(prefers-reduced-motion:reduce){.legendary-particle{display:none}.case-overlay.legendary-hit:before{animation:none}}
+@media(prefers-reduced-motion:reduce){.treasure-chest,.chest-opening,.reward-glow,.case-result-icon{animation:none!important}.case-track{transition:none!important}}
+
+/* Разные эффекты редкости наград */
+.case-item.rare{border-color:#5bb8ff;box-shadow:inset 0 0 18px #279dff25}.case-item.epic{border-color:#bd72ff;box-shadow:inset 0 0 20px #9b36ff30}.case-item.legendary{border-color:#ffd45d;box-shadow:inset 0 0 24px #ffba2938;animation:gold-card-pulse 1.2s infinite alternate}
+.case-result.rare-result{border:2px solid #5bb8ff;border-radius:16px;padding:16px;background:linear-gradient(145deg,#123c5c,#111b2b);box-shadow:0 0 25px #35aaff77}.case-result.epic-result{border:2px solid #bd72ff;border-radius:16px;padding:16px;background:linear-gradient(145deg,#381b56,#171426);box-shadow:0 0 28px #a53cff88}.case-result.rare-result .case-result-icon{filter:drop-shadow(0 0 20px #43baff)}.case-result.epic-result .case-result-icon{filter:drop-shadow(0 0 22px #bd72ff)}
+@keyframes gold-card-pulse{from{box-shadow:inset 0 0 12px #ffba2922}to{box-shadow:inset 0 0 25px #ffba2988}}
+
+.crystal-chest-panel{position:relative;overflow:hidden}.crystal-chest-panel:before{content:"";position:absolute;inset:-40%;pointer-events:none;background:conic-gradient(from 0deg,transparent 0 12%,#77d7ff13 15%,transparent 19% 32%,#b58aff17 36%,transparent 41%);animation:legendary-rays 16s linear infinite}.crystal-chest-art{position:relative;z-index:1;animation:crystal-float 2s ease-in-out infinite,crystal-glow 1.4s ease-in-out infinite alternate}.crystal-open-btn{display:block;width:100%;margin-top:12px}.crystal-results-grid{width:min(100%,600px);display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:10px;margin:16px 0;max-height:44vh;overflow:auto;padding:4px}.crystal-reward-card{min-width:0;opacity:0;animation:crystal-card-arrive .55s cubic-bezier(.2,1.4,.3,1) var(--delay,0s) forwards;border:1px solid #6aaed6;border-radius:13px;padding:13px 8px;background:linear-gradient(145deg,#163a59,#11182b);box-shadow:0 0 18px #45bfff25;display:flex;flex-direction:column;align-items:center;gap:8px}.crystal-reward-card.rare{border-color:#5bb8ff;box-shadow:0 0 20px #279dff66}.crystal-reward-card.epic{border-color:#bd72ff;background:linear-gradient(145deg,#43245d,#171426);box-shadow:0 0 25px #a53cff77}.crystal-reward-card.legendary{border-color:#ffd45d;background:linear-gradient(145deg,#654312,#211a19);box-shadow:0 0 30px #ffba29aa;animation:crystal-card-arrive .55s cubic-bezier(.2,1.4,.3,1) var(--delay,0s) forwards,gold-card-pulse 1s ease-in-out .6s infinite alternate}.crystal-card-icon{font-size:42px;filter:drop-shadow(0 0 12px #70d5ff)}.crystal-reward-card.legendary .crystal-card-icon{filter:drop-shadow(0 0 18px #ffcf56)}.crystal-reward-card b{font-size:13px;line-height:1.3}.crystal-reward-card small{font-size:10px;color:#c8e8ff}.crystal-case-overlay{background:radial-gradient(ellipse at center,#14385cf7,#030711fc 76%)}@keyframes crystal-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}@keyframes crystal-glow{from{filter:drop-shadow(0 0 10px #37baff)}to{filter:drop-shadow(0 0 32px #a17cff)}}@keyframes crystal-card-arrive{from{opacity:0;transform:translateY(24px) scale(.6) rotate(-3deg)}to{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+
+
+.backpack-launch{width:100%;display:flex;align-items:center;gap:13px;text-align:left;margin:12px 0 16px;padding:13px 15px;border:1px solid #e4bd67;border-radius:15px;color:#fff;background:linear-gradient(110deg,#293f4bdf,#18252eeF 60%,#4a3822df);box-shadow:0 8px 24px #0005,inset 0 0 18px #f9c55c12;cursor:pointer;position:relative;overflow:hidden;transition:transform .18s,border-color .18s}
+.backpack-launch:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 25%,#ffffff12 48%,transparent 70%);transform:translateX(-100%);animation:backpack-shimmer 4s ease-in-out infinite}
+.backpack-launch:active{transform:scale(.985)}.backpack-emoji{font-size:38px;filter:drop-shadow(0 3px 8px #e6b64b55);z-index:1}.backpack-copy{display:flex;flex-direction:column;gap:4px;flex:1;z-index:1}.backpack-copy b{letter-spacing:1.2px;color:#ffe1a0;font-size:14px}.backpack-copy small{font-size:11px;color:#c8d8df}.backpack-arrow{font-size:32px;color:#ffd36b;z-index:1}.bag-item-card{border:1px solid #ffffff19;background:linear-gradient(125deg,#ffffff0b,#08131a44);border-radius:12px;padding:10px;margin-top:8px}.bag-item-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:12px;background:#ffffff0b;font-size:30px}.bag-quality-1{border-color:#8396a0}.bag-quality-2{border-color:#5bb8ff;box-shadow:inset 0 0 12px #279dff12}.bag-quality-3{border-color:#bd72ff;box-shadow:inset 0 0 12px #9b36ff18}.bag-quality-4{border-color:#ffd45d;box-shadow:inset 0 0 16px #ffba2920}@keyframes backpack-shimmer{0%,60%{transform:translateX(-100%)}85%,100%{transform:translateX(100%)}}
+
+/* Рамки аватара: объёмный металл, фаски, орнамент и внутренний свет */
+.avatar[class*="avatar-frame-"],.profile-big-avatar[class*="avatar-frame-"]{isolation:isolate;overflow:visible!important;position:relative;z-index:0;outline:1px solid #fff3;outline-offset:1px}
+.avatar[class*="avatar-frame-"]::before,.profile-big-avatar[class*="avatar-frame-"]::before{content:"";position:absolute;inset:-4px;border-radius:inherit;padding:4px;pointer-events:none;z-index:3;background:var(--frame-metal);box-shadow:inset 0 2px 2px #fff9,inset 0 -3px 4px #000b,0 3px 5px #0009; -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.avatar[class*="avatar-frame-"]::after,.profile-big-avatar[class*="avatar-frame-"]::after{content:"✦";position:absolute;right:-5px;top:-7px;z-index:4;pointer-events:none;font-size:13px;line-height:1;color:var(--frame-glint);text-shadow:0 0 4px var(--frame-glint),0 0 9px var(--frame-glint);filter:drop-shadow(0 1px 1px #000);animation:frame-glint 3.2s ease-in-out infinite}
+.avatar-frame-bronze,.profile-big-avatar.avatar-frame-bronze{--frame-metal:linear-gradient(135deg,#fff0b0 0%,#a85b2c 12%,#f6c77b 23%,#63341e 38%,#d99a52 53%,#7b421f 70%,#f8d18a 85%,#62351f 100%);--frame-glint:#ffe0a0;border:2px solid #d69a55!important;box-shadow:0 0 0 2px #4b291b,0 0 13px #d99a5266,inset 0 0 8px #ffdc8b55!important}
+.avatar-frame-silver,.profile-big-avatar.avatar-frame-silver{--frame-metal:linear-gradient(135deg,#fff 0%,#758ba2 12%,#e9f5ff 25%,#526a83 42%,#c7e5f8 58%,#718ba4 76%,#fff 100%);--frame-glint:#d7f2ff;border:2px solid #d9e5f2!important;box-shadow:0 0 0 2px #42566b,0 0 15px #8ed8ff99,inset 0 0 8px #fff8!important}
+.avatar-frame-emerald,.profile-big-avatar.avatar-frame-emerald{--frame-metal:linear-gradient(135deg,#d4ffe9 0%,#137d5a 14%,#8dffd1 28%,#064333 44%,#39dca3 59%,#11674b 76%,#c4ffe6 100%);--frame-glint:#8affce;border:2px solid #63efbd!important;box-shadow:0 0 0 2px #073e31,0 0 17px #37ffc488,inset 0 0 9px #8bffd277!important}
+.avatar-frame-arcane,.profile-big-avatar.avatar-frame-arcane{--frame-metal:linear-gradient(135deg,#f6d8ff 0%,#7135a2 13%,#e3a4ff 27%,#32134f 43%,#b86cff 60%,#54247b 77%,#f1caff 100%);--frame-glint:#e7b7ff;border:2px solid #c78aff!important;box-shadow:0 0 0 2px #32144b,0 0 19px #a855f7bb,inset 0 0 10px #e5aaff88!important}
+.avatar-frame-legendary,.profile-big-avatar.avatar-frame-legendary{--frame-metal:conic-gradient(from 0deg,#fff7c2,#c47a18,#fff0a1,#74400e,#ffe57a,#a65b13,#fff7c2);--frame-glint:#fff1a0;border:2px solid #ffe38a!important;box-shadow:0 0 0 2px #60360e,0 0 9px #ffd45a,0 0 24px #ffad28cc,inset 0 0 12px #fff0a0!important;animation:frame-legendary-glow 2s ease-in-out infinite alternate}
+@keyframes frame-glint{0%,100%{transform:scale(.8) rotate(0deg);opacity:.65}50%{transform:scale(1.25) rotate(45deg);opacity:1}}
+.avatar-frame-legendary::before,.profile-big-avatar.avatar-frame-legendary::before{background:conic-gradient(from 0deg,transparent 0 7%,#fff7c9 8%,#c47a18 10%,transparent 13% 24%,#fff0a0 26%,transparent 29% 49%,#fff1b8 51%,transparent 54% 74%,#fff0a0 76%,transparent 79% 100%);animation:legendary-frame-turn 9s linear infinite}
+@keyframes legendary-frame-turn{to{transform:rotate(360deg)}}
+
+
+.equipment-launch{width:100%;display:flex;align-items:center;gap:12px;text-align:left;margin:10px 0 14px;padding:13px;border:1px solid #6ca9bd;border-radius:14px;color:#f6f1e6;background:linear-gradient(115deg,#173d4bdf,#10222deF);box-shadow:0 5px 18px #0005,inset 0 1px #ffffff20;cursor:pointer}
+.equipment-launch .equipment-emoji{font-size:32px;filter:drop-shadow(0 0 8px #65d9ff80)}.equipment-launch b{display:block;color:#bceeff;font-size:14px}.equipment-launch small{display:block;color:#b9cbd1;margin-top:3px}.equipment-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.equipment-slot{padding:13px 10px;border:1px solid #547783;border-radius:13px;background:linear-gradient(145deg,#1a3540ed,#0c1a24ed);box-shadow:inset 0 1px #ffffff13;min-height:148px}.equipment-slot .slot-icon{font-size:31px;filter:drop-shadow(0 0 7px #7edfff55)}.equipment-slot h3{font-size:12px;letter-spacing:.6px;margin:7px 0;color:#d5f2ff}.equipment-slot .equipped-name{font-weight:800;font-size:13px;min-height:32px}.equipment-slot select{width:100%;margin-top:8px;padding:8px 5px;border-radius:8px;border:1px solid #58737d;background:#10232d;color:#fff;font-size:11px}.equipment-bonus{font-size:11px;color:#8de0b9;margin-top:5px}
+
+
+.online-quick{border:1px solid #56b9d7;background:linear-gradient(145deg,#164e61,#10232d);color:#c5f4ff;border-radius:11px;min-width:34px;height:34px;font-size:18px;cursor:pointer;box-shadow:0 0 12px #42c9ff22}
+.online-modal{position:fixed;inset:0;z-index:10050;background:#02070be8;backdrop-filter:blur(9px);display:flex;align-items:center;justify-content:center;padding:16px}.online-card{width:min(520px,100%);max-height:90vh;overflow:auto;background:linear-gradient(145deg,#102d39,#09141f);border:1px solid #4e9bb1;border-radius:20px;padding:22px;box-shadow:0 25px 90px #000b,0 0 30px #22c7ff1b;color:#edfaff}.online-card h2{margin:0 0 8px;color:#aeeeff}.online-card p{color:#bfd4df;font-size:13px;line-height:1.5}.online-card label{display:block;font-size:12px;color:#c4dbe4;margin:12px 0 5px}.online-card input{box-sizing:border-box;width:100%;padding:12px;border-radius:9px;border:1px solid #496d7a;background:#07151d;color:white}.online-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.online-actions button{flex:1;min-width:120px}.online-status{border:1px solid #2b5666;border-radius:10px;background:#071923;padding:12px;margin:12px 0;white-space:pre-line;font-size:13px}.online-hidden{display:none!important}.online-player{padding:10px;border-radius:9px;background:#0a202a;margin:6px 0}.online-hp{height:9px;background:#2b3039;border-radius:9px;overflow:hidden;margin:5px 0 10px}.online-hp span{height:100%;display:block;background:linear-gradient(90deg,#2bdb8d,#b8ff9a);transition:width .25s}
+
+</style>
+</head><body><main class="app"><div class="sky"></div><div class="mountain"></div><div class="village"></div><div class="weather-layer" aria-hidden="true"><div class="weather-depth"></div><canvas class="weather-rain-canvas"></canvas></div>
+<header class="hud"><button class="settings-quick" type="button" onclick="settings()" aria-label="Настройки" title="Настройки">⚙</button><button class="mail-quick" id="mailQuick" type="button" onclick="openMailbox()" aria-label="Почта игрока" title="Почта: награды и новости">✉<span class="mail-badge" id="mailBadge">3</span></button><button class="online-quick" type="button" onclick="openOnline()" title="Аккаунт и онлайн PvP">🌐</button><button class="avatar profile-trigger" type="button" onclick="openProfile()" aria-label="Открыть профиль игрока" title="Профиль игрока">影</button><div><div class="brand">RCARD PvP</div><div class="sub">УРОВЕНЬ 1 · ДЕРЕВНЯ СКРЫТОГО ПЛАМЕНИ</div></div><div class="curr"><button id="gold" onclick="topUp('gold')" title="Пополнить золото" style="display:block;width:100%;text-align:right;background:none;border:0;color:#ffc75a;padding:0;cursor:pointer">🪙 1800 ＋</button><button id="gems" onclick="topUp('gems')" title="Пополнить кристаллы" style="display:block;width:100%;text-align:right;background:none;border:0;color:#ffc75a;padding:0;cursor:pointer">💎 50 ＋</button></div></header>
+<section class="content" id="content"></section>
+<nav class="nav"><button class="active" data-page="home"><b>🏯</b>ДОМ</button><button data-page="world"><b>🌐</b>МИР</button><button data-page="battle"><b>⚔️</b>БОЙ</button><button data-page="heroes"><b>🃏</b>НИНДЗЯ</button><button data-page="shop"><b>🏪</b>МАГАЗИН</button></nav></main>
+<div id="onlineModal" class="online-modal online-hidden" role="dialog" aria-modal="true" aria-label="Аккаунт и онлайн PvP"><div class="online-card"><button onclick="closeOnline()" style="float:right;background:none;border:0;color:#d7f5ff;font-size:25px;cursor:pointer">×</button><h2>🌐 RCARD PvP ONLINE</h2><p>Создай аккаунт, чтобы переносить прогресс между устройствами, и сражайся с другими игроками в реальном времени.</p><div id="onlineAuth"><label for="onlineUsername">Имя игрока</label><input id="onlineUsername" autocomplete="username" maxlength="18" placeholder="Например, Shinobi_7"><label for="onlinePassword">Пароль (минимум 8 символов)</label><input id="onlinePassword" type="password" autocomplete="current-password" maxlength="128" placeholder="••••••••"><div class="online-actions"><button class="primary" onclick="onlineAuthSubmit('login')">ВОЙТИ</button><button class="secondary" onclick="onlineAuthSubmit('register')">СОЗДАТЬ АККАУНТ</button></div></div><div id="onlineLogged" class="online-hidden"><div class="online-status" id="onlineAccountInfo">Аккаунт подключён.</div><div class="online-actions"><button class="primary" onclick="onlineFindMatch()">⚔ НАЙТИ СОПЕРНИКА</button><button class="secondary" onclick="onlineLeaderboard()">🏆 РЕЙТИНГ</button></div><div class="online-actions"><button class="secondary" onclick="onlineLogout()">ВЫЙТИ ИЗ АККАУНТА</button></div></div><div class="online-status" id="onlineStatus">Не подключено. Для онлайн-режима открой игру на сервере RCard PvP Online.</div><div id="onlineDuel" class="online-hidden"><h3 id="onlineDuelTitle">Соперник найден!</h3><div id="onlineDuelPlayers"></div><div class="online-actions"><button class="primary" onclick="onlineAttack()">⚡ АТАКОВАТЬ</button></div><p id="onlineDuelLog"></p></div><div class="online-actions"><button class="secondary" onclick="closeOnline()">ЗАКРЫТЬ</button></div></div></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const ninjaData=[
+{name:"Кайто",rarity:"ЛЕГЕНДАРНЫЙ",role:"Урон",power:920,hp:2800},
+{name:"Акира",rarity:"ЭПИЧЕСКИЙ",role:"Поддержка",power:710,hp:3100},
+{name:"Рэн",rarity:"ЭПИЧЕСКИЙ",role:"Защита",power:640,hp:4200},
+{name:"Юми",rarity:"РЕДКИЙ",role:"Урон",power:530,hp:2200},
+{name:"Такеши",rarity:"РЕДКИЙ",role:"Контроль",power:490,hp:2600},
+{name:"Сора",rarity:"ОБЫЧНЫЙ",role:"Поддержка",power:360,hp:2400},
+{name:"Нао",rarity:"ОБЫЧНЫЙ",role:"Урон",power:340,hp:2000}];
+let team=[0,1,2,3,4],gold=1800,gems=50,wins=0;
+try{const wallet=JSON.parse(localStorage.getItem("rcard_wallet")||"{}");if(Number.isFinite(wallet.gold))gold=wallet.gold;if(Number.isFinite(wallet.gems))gems=wallet.gems;}catch(e){}
+const $=s=>document.querySelector(s),content=$("#content");
+
+function heroIcon(name){
+ const icons={"Кайто":"🥷","Акира":"⚡","Рэн":"🛡️","Юми":"🏹","Такеши":"🔥","Сора":"🌪️","Нао":"🦊"};
+ return icons[name]||"🥷";
+}
+
+function update(){ $("#gold").textContent="🪙 "+gold.toLocaleString("ru-RU")+" ＋";$("#gems").textContent="💎 "+gems.toLocaleString("ru-RU")+" ＋";try{localStorage.setItem("rcard_wallet",JSON.stringify({gold,gems}));localStorage.setItem("rcard_inventory",JSON.stringify(inventoryItems))}catch(e){}} 
+const topUpPacks={gold:[{price:'0,99 $',amount:1200,bonus:0},{price:'2,99 $',amount:4200,bonus:500},{price:'5,99 $',amount:9500,bonus:1500},{price:'11,99 $',amount:21000,bonus:4500}],gems:[{price:'0,99 $',amount:60,bonus:0},{price:'2,99 $',amount:220,bonus:20},{price:'5,99 $',amount:500,bonus:70},{price:'11,99 $',amount:1100,bonus:200}]};
+function topUp(type='gold'){
+ const isGold=type==='gold',currency=isGold?'золота':'кристаллов',icon=isGold?'🪙':'💎';
+ const modal=document.createElement('div');modal.className='profile-modal';modal.innerHTML=`<section class="profile-card" role="dialog" aria-modal="true" style="max-height:88dvh;overflow:auto"><div style="display:flex;justify-content:space-between;align-items:center"><div class="team-title">💳 ПОПОЛНЕНИЕ СЧЁТА · DEMO</div><button class="secondary" onclick="this.closest('.profile-modal').remove()">✕</button></div><p class="sub">Выбери пакет ${currency}. Это демонстрационный магазин: реальные деньги не списываются.</p><div style="display:flex;gap:8px;margin:12px 0"><button class="secondary" style="flex:1" onclick="this.closest('.profile-modal').remove();topUp('gold')">🪙 Золото</button><button class="secondary" style="flex:1" onclick="this.closest('.profile-modal').remove();topUp('gems')">💎 Кристаллы</button></div>${topUpPacks[type].map((p,i)=>`<div class="hero-row" style="grid-template-columns:1fr auto;gap:10px"><div><b>${icon} ${(p.amount+p.bonus).toLocaleString('ru-RU')} ${currency}</b><div class="sub">${p.amount.toLocaleString('ru-RU')} ${currency}${p.bonus?` + бонус ${p.bonus}`:''}</div></div><button class="secondary" onclick="buyDemoPack('${type}',${i},this)">${p.price}</button></div>`).join('')}<small class="sub">⚠️ ДЕМО-РЕЖИМ: кнопки начисляют игровую валюту бесплатно. Реальная оплата и платёжный провайдер не подключены; цены показаны только как макет.</small></section>`;modal.addEventListener('click',e=>{if(e.target===modal)modal.remove()});document.body.append(modal);
+}
+function buyDemoPack(type,index,button){const p=topUpPacks[type][index],amount=p.amount+p.bonus;if(type==='gold')gold+=amount;else gems+=amount;update();const modal=button.closest('.profile-modal');if(modal)modal.remove();message('Счёт пополнен!',`Демо-пополнение успешно: +${amount.toLocaleString('ru-RU')} ${type==='gold'?'золота':'кристаллов'}. Реального платежа не было.`);}
+
+const weatherOptions=[
+ {id:"sun",name:"Солнце",icon:"☀️",desc:"Ясное небо и солнечные лучи"},
+ {id:"rain",name:"Дождь",icon:"🌧️",desc:"Капли дождя поверх деревни"},
+ {id:"storm",name:"Гроза",icon:"⛈️",desc:"Сильный дождь и вспышки молний"},
+ {id:"moon",name:"Луна",icon:"🌙",desc:"Ночное небо и сияющая луна"},
+ {id:"fog",name:"Туман",icon:"🌫️",desc:"Мягкая дымка над деревней"},
+ {id:"clouds",name:"Облака",icon:"☁️",desc:"Плывущие облака на небе"}
+];
+let currentWeather="rain";
+try{const w=localStorage.getItem("rcard_menu_weather");if(weatherOptions.some(x=>x.id===w))currentWeather=w}catch(e){}
+// Многослойные капли: каплевидные тела с бликом, мягкий короткий шлейф и брызги у земли.
+(function initVolumetricRain(){
+ const canvas=document.querySelector('.weather-rain-canvas'); if(!canvas)return;
+ const ctx=canvas.getContext('2d'); let w=0,h=0,dpr=1,drops=[],splashes=[],raf=0,last=0;
+ function resize(){const r=canvas.parentElement.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,2);w=Math.max(1,r.width);h=Math.max(1,r.height);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);const count=Math.round(w*h/950);drops=Array.from({length:count},()=>makeDrop(true));}
+ function makeDrop(random=false){const depth=Math.random();return{x:Math.random()*w,y:random?Math.random()*h:-20-Math.random()*h*.25,depth,size:.65+depth*1.7,speed:3+depth*7,drift:1.1+depth*2.2,phase:Math.random()*Math.PI*2};}
+ function draw(now){raf=requestAnimationFrame(draw);if(!document.querySelector('.app.weather-rain,.app.weather-storm')){ctx.clearRect(0,0,w,h);last=now;return;}const dt=Math.min(2,(now-(last||now))/16.67);last=now;ctx.clearRect(0,0,w,h);
+  for(const d of drops){d.x-=d.drift*dt;d.y+=d.speed*dt;const len=(2+d.depth*5)*d.size;const x=d.x,y=d.y,r=(.65+d.depth*.85)*d.size;
+   // очень короткий полупрозрачный шлейф, чтобы капли не выглядели палками
+   ctx.beginPath();ctx.moveTo(x+1,y-len*.6);ctx.quadraticCurveTo(x+2.5,y-len*.1,x,y+r*1.1);ctx.strokeStyle=`rgba(177,216,244,${.08+d.depth*.17})`;ctx.lineWidth=.45+d.depth*.45;ctx.stroke();
+   const g=ctx.createRadialGradient(x-r*.35,y-r*.45,.1,x,y,r*1.5);g.addColorStop(0,`rgba(246,253,255,${.38+d.depth*.34})`);g.addColorStop(.35,`rgba(174,218,247,${.22+d.depth*.28})`);g.addColorStop(1,'rgba(122,184,222,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x,y,r*.72,r*1.25,-.28,0,Math.PI*2);ctx.fill();
+   // тонкий блик на капле
+   ctx.beginPath();ctx.ellipse(x-r*.2,y-r*.22,r*.16,r*.38,-.35,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${.2+d.depth*.32})`;ctx.fill();
+   if(d.y>h*.77&&Math.random()<.045*d.depth){splashes.push({x:d.x,y:Math.min(h-4,d.y),life:1,size:.8+d.depth*1.8});}
+   if(d.y>h+8||d.x<-10)drops[drops.indexOf(d)]=makeDrop();
+  }
+  for(let i=splashes.length-1;i>=0;i--){const s=splashes[i];s.life-=.055*dt;ctx.beginPath();ctx.ellipse(s.x,s.y, s.size*(1.8-s.life),s.size*.45*(1.5-s.life),0,0,Math.PI*2);ctx.strokeStyle=`rgba(200,231,249,${Math.max(0,s.life)*.48})`;ctx.lineWidth=.7;ctx.stroke();if(s.life<=0)splashes.splice(i,1);}
+ }
+ resize();window.addEventListener('resize',resize,{passive:true});canvas.style.display='block';cancelAnimationFrame(raf);raf=requestAnimationFrame(draw);
+})();
+function applyWeather(id){if(!weatherOptions.some(x=>x.id===id))return;currentWeather=id;document.querySelector(".app").classList.remove(...weatherOptions.map(x=>"weather-"+x.id));document.querySelector(".app").classList.add("weather-"+id);try{localStorage.setItem("rcard_menu_weather",id)}catch(e){};const label=$("#weatherCurrent");if(label){const w=weatherOptions.find(x=>x.id===id);label.textContent=w.icon+" "+w.name;}document.querySelectorAll("[data-weather]").forEach(b=>{const on=b.dataset.weather===id;b.style.borderColor=on?"#ffd36b":"#526b74";b.style.background=on?"#604522":"#10232d";});}
+function settings(){
+ const old=document.querySelector(".profile-modal");if(old)old.remove();
+ const modal=document.createElement("div");modal.className="profile-modal";
+ modal.innerHTML=`<section class="profile-card" role="dialog" aria-modal="true" aria-label="Настройки игры"><div style="display:flex;align-items:center;justify-content:space-between"><div class="team-title">⚙️ НАСТРОЙКИ</div><button class="secondary" onclick="this.closest('.profile-modal').remove()">✕</button></div><h2 style="margin:8px 0;color:#f3c768">Погода в меню</h2><p class="sub">Выбери атмосферу деревни. Настройка сохраняется автоматически.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px">${weatherOptions.map(w=>`<button data-weather="${w.id}" onclick="applyWeather('${w.id}')" style="min-height:92px;border:2px solid #526b74;border-radius:12px;background:#10232d;color:#fff;padding:10px;cursor:pointer"><span style="font-size:30px;display:block">${w.icon}</span><b>${w.name}</b><small style="display:block;color:#c2d1d2;margin-top:4px">${w.desc}</small></button>`).join("")}</div><div class="panel" style="margin-top:14px;border:1px solid #d5a94e;background:#2b261c"><h2 style="margin:0 0 6px;color:#f3c768">💳 Игровой счёт</h2><p class="sub">Золото: <b style="color:#ffd36b">${gold.toLocaleString("ru-RU")} 🪙</b> · Кристаллы: <b style="color:#8fe8ff">${gems.toLocaleString("ru-RU")} 💎</b></p><p class="sub">Выбери валюту и пакет для демонстрационного пополнения. Реальные деньги не списываются.</p><div style="display:flex;gap:8px"><button class="primary" style="flex:1" onclick="this.closest('.profile-modal').remove();topUp('gold')">＋ Пополнить золото</button><button class="secondary" style="flex:1" onclick="this.closest('.profile-modal').remove();topUp('gems')">＋ Кристаллы</button></div></div><button class="primary" onclick="this.closest('.profile-modal').remove()">СОХРАНИТЬ И ЗАКРЫТЬ</button></section>`;
+ modal.addEventListener("click",e=>{if(e.target===modal)modal.remove()});document.body.append(modal);applyWeather(currentWeather);
+}
+const defaultMailbox=[
+ {id:'welcome',icon:'🎁',type:'reward',title:'Подарок новичку',text:'Добро пожаловать в RCard PvP! Это стартовое письмо с информацией о приветственном подарке.',reward:{gold:500,gems:10},date:'Подарок',claimed:false,read:false},
+ {id:'update-weather',icon:'🌦️',type:'news',title:'Обновление деревни',text:'В меню доступны погодные эффекты: дождь, гроза, туман и лунное сияние.',date:'Новости игры',claimed:true,read:false},
+ {id:'promo-week',icon:'🎉',type:'promo',title:'Акция выходного дня',text:'Заглядывай в магазин и открывай сундуки. Новые события будут появляться здесь.',date:'События',claimed:true,read:false}
+];
+let mailbox=[];
+try{const saved=JSON.parse(localStorage.getItem('rcard_mailbox')||'null');mailbox=Array.isArray(saved)?saved:defaultMailbox.map(x=>({...x}));}catch(e){mailbox=defaultMailbox.map(x=>({...x}));}
+function saveMailbox(){try{localStorage.setItem('rcard_mailbox',JSON.stringify(mailbox))}catch(e){}updateMailBadge()}
+function updateMailBadge(){const unread=mailbox.filter(m=>!m.read).length;const badge=document.getElementById('mailBadge'),btn=document.getElementById('mailQuick');if(badge){badge.textContent=unread>9?'9+':unread;badge.style.display=unread?'grid':'none'}if(btn)btn.classList.toggle('has-unread',unread>0)}
+function openMailbox(){mailbox.forEach(m=>m.read=true);saveMailbox();const old=document.querySelector('.mail-modal');if(old)old.remove();const modal=document.createElement('div');modal.className='profile-modal mail-modal';modal.innerHTML=`<section class="profile-card" role="dialog" aria-modal="true" aria-label="Почта игрока" style="max-height:88dvh;overflow:auto"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><div class="team-title" style="text-align:left;margin:0">✉️ ПОЧТА НИНДЗЯ</div><div class="sub">Награды, новости и специальные предложения</div></div><button class="secondary" onclick="this.closest('.mail-modal').remove()">✕</button></div><div style="display:flex;gap:7px;margin:13px 0"><button class="secondary" style="flex:1" onclick="renderMailbox('all')">📬 Все</button><button class="secondary" style="flex:1" onclick="renderMailbox('reward')">🎁 Награды</button><button class="secondary" style="flex:1" onclick="renderMailbox('news')">📰 Новости</button></div><div id="mailList"></div><p class="sub" style="margin-top:12px">Сообщения сохраняются в этом браузере. Новые акции и награды в демо-версии добавляются игровыми обновлениями.</p></section>`;modal.addEventListener('click',e=>{if(e.target===modal)modal.remove()});document.body.append(modal);renderMailbox('all')}
+function renderMailbox(filter='all'){const list=document.getElementById('mailList');if(!list)return;const items=mailbox.filter(m=>filter==='all'||m.type===filter);list.innerHTML=items.length?items.map(m=>`<article class="mail-card ${m.read?'':'unread'} ${m.claimed?'claimed':''}"><div class="mail-icon">${m.icon||'✉️'}</div><div><h3>${m.title}</h3><div class="mail-meta">${m.date||'Почта'} · ${m.type==='reward'?'НАГРАДА':m.type==='promo'?'АКЦИЯ':'НОВОСТИ'}</div><p>${m.text}</p>${m.reward?`<p style="color:#ffdb7a">${m.reward.gold?`🪙 ${m.reward.gold} `:''}${m.reward.gems?`💎 ${m.reward.gems}`:''}</p>${m.claimed?'<span class="sub">✓ Награда получена</span>':`<button class="mail-action" onclick="claimMailReward('${m.id}')">🎁 ЗАБРАТЬ НАГРАДУ</button>`}`:''}</div></article>`).join(''):'<div class="panel sub">Пока писем нет. Загляни позже!</div>'}
+function claimMailReward(id){const m=mailbox.find(x=>x.id===id);if(!m||m.claimed||!m.reward)return;m.claimed=true;gold+=Number(m.reward.gold)||0;gems+=Number(m.reward.gems)||0;update();saveMailbox();renderMailbox('all');message('Награда получена',`Начислено: ${m.reward.gold?m.reward.gold+' 🪙 ':''}${m.reward.gems?m.reward.gems+' 💎':''}`)}
+function setPage(p){document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===p));({home,world,heroes,bag,battle,shop})[p]();}
+function feature(icon,title,sub,fn,wide=false){return `<button class="feature ${wide?'wide':''}" onclick="${fn}"><span class="ico">${icon}</span><strong>${title}</strong><span>${sub}</span></button>`}
+function home(){$(".app").classList.remove("bag-open");content.innerHTML=`<div class="title">СОБЕРИ СВОЙ ОТРЯД</div><div class="subtitle">Деревня скрытого пламени</div><button class="backpack-launch" onclick="bag()" aria-label="Открыть рюкзак"><span class="backpack-emoji">🎒</span><span class="backpack-copy"><b>МОЙ РЮКЗАК</b><small>Все полученные предметы и ресурсы</small></span><span class="backpack-arrow">›</span></button><button class="equipment-launch" onclick="equipment()" aria-label="Открыть снаряжение"><span class="equipment-emoji">🛡️</span><span><b>СНАРЯЖЕНИЕ</b><small>Броня, шлем, штаны, ботинки и оружие</small></span><span class="backpack-arrow">›</span></button><div class="village-art"><span class="tree left">🌳</span><div class="pagoda"><div class="tower"></div><div class="roof r1"></div><div class="roof r2"></div><div class="roof r3"></div><div class="door"></div></div><span class="tree right">🌲</span></div><div class="feature-grid">${feature("🏆","РАНГОВЫЙ PvP","Сражайся за рейтинг","battle()")}${feature("👥","КЛАН","Найди союзников","message('Кланы','Клановая система появится в будущей версии.')")}${feature("🎴","НАБОР НИНДЗЯ","Открой новых героев","recruit()")}${feature("⭐","ЭЛИТНЫЙ НАБОР","Усиль команду","recruit()",true)}</div><div class="team-title">ТВОЯ КОМАНДА · ${team.length}/5</div><div class="team">${team.map(i=>`<div class="hero-chip"><div style="font-size:24px">${heroIcon(ninjaData[i].name)}</div>${ninjaData[i].name}<small>${ninjaData[i].rarity.split(" ")[0]}</small></div>`).join("")}</div><button class="primary" onclick="battle()">⚔ НАЧАТЬ АВТОБОЙ</button>`}
+function world(){$(".app").classList.remove("bag-open");content.innerHTML=`<div class="title">МИР НИНДЗЯ</div><div class="panel">${feature("🗺️","ИССЛЕДОВАНИЕ","Открой новые регионы","message('Исследование','Новые регионы появятся в следующих обновлениях.')",true)}${feature("🏆","АРЕНА","Сражения за рейтинг","battle()",true)}${feature("🤝","КЛАНОВЫЕ ВОЙНЫ","Командные события","message('Клановые войны','Этот режим запланирован для онлайн-версии.')",true)}</div>`}
+function heroes(){$(".app").classList.remove("bag-open");content.innerHTML=`<div class="title">КОЛЛЕКЦИЯ НИНДЗЯ</div><div class="subtitle">Выбери до 5 героев для отряда</div><div class="panel">${heroesData()}</div><button class="primary" onclick="battle()">⚔ В БОЙ</button>`}
+function heroesData(){return ninjaData.map((h,i)=>`<div class="hero-row"><div><b>${h.name}</b> <span class="rarity">${h.rarity}</span><div class="sub">${h.role} · ⚔ ${h.power} · ♥ ${h.hp}</div><div class="sub">${team.includes(i)?"✓ В отряде":"Свободен"}</div></div><button onclick="toggleHero(${i})">${team.includes(i)?"УБРАТЬ":"ДОБАВИТЬ"}</button></div>`).join("")}
+function toggleHero(i){if(team.includes(i)){if(team.length>1)team=team.filter(x=>x!==i)}else if(team.length<5)team.push(i);else return message("Отряд заполнен","В команде может быть не больше пяти героев.");heroes();}
+const inventoryItems=[
+ {name:"Свиток опыта",icon:"📜",qty:24,quality:"Обычный",grade:1,desc:"Для усиления ниндзя"},
+ {name:"Осколок души",icon:"💠",qty:7,quality:"Редкий",grade:2,desc:"Материал призыва"},
+ {name:"Эликсир здоровья",icon:"🧪",qty:15,quality:"Обычный",grade:1,desc:"Восстанавливает силы"},
+ {name:"Печать молнии",icon:"⚡",qty:3,quality:"Эпический",grade:3,desc:"Редкий материал улучшения"},
+ {name:"Ядро дракона",icon:"🐉",qty:1,quality:"Легендарный",grade:4,desc:"Материал высшего качества"},
+ {name:"Монета удачи",icon:"🪙",qty:42,quality:"Обычный",grade:1,desc:"Особая игровая валюта"},
+ {name:"Кристалл духа",icon:"🔮",qty:5,quality:"Эпический",grade:3,desc:"Для пробуждения способностей"}
+];
+try{const savedInventory=JSON.parse(localStorage.getItem("rcard_inventory")||"null");if(Array.isArray(savedInventory)){inventoryItems.splice(0,inventoryItems.length,...savedInventory.filter(x=>x&&typeof x.name==="string"&&Number.isFinite(Number(x.qty))).map(x=>({...x,qty:Number(x.qty),grade:Number(x.grade)||1})))}}catch(e){}
+const BACKPACK_CAPACITY=300;
+function inventoryCount(){return inventoryItems.reduce((sum,item)=>sum+Math.max(0,Number(item.qty)||0),0)}
+function hasInventorySpace(amount=1){return inventoryCount()+amount<=BACKPACK_CAPACITY}
+function backpackFull(amount=1){if(hasInventorySpace(amount))return false;message('🎒 Рюкзак переполнен',`В рюкзаке ${inventoryCount()}/${BACKPACK_CAPACITY} предметов. Освободи место, продав ненужные вещи.`);bag();return true}
+function addInventoryItem(item,amount=1){if(backpackFull(amount))return false;const existing=inventoryItems.find(x=>x.name===item.name);if(existing)existing.qty+=amount;else inventoryItems.push({...item,qty:amount});update();return true}
+function sellInventoryItem(name,all=false){const item=inventoryItems.find(x=>x.name===name);if(!item)return;const amount=all?item.qty:1;const grade=Math.max(1,Number(item.grade)||1);const price=Math.max(1,grade*12);item.qty-=amount;gold+=amount*price;if(item.qty<=0)inventoryItems.splice(inventoryItems.indexOf(item),1);update();const sort=document.getElementById('bagSort')?.value||'qtyDesc';bag();const select=document.getElementById('bagSort');if(select)select.value=sort;renderInventory(sort);message('Предмет продан',`Продано: ${item.icon} ${name} ×${amount}. Получено ${amount*price} 🪙.`)}
+let treasureCollection={};
+try{treasureCollection=JSON.parse(localStorage.getItem("rcard_treasure_collection")||"{}")||{}}catch(e){treasureCollection={}}
+const treasureRewards=[
+ {icon:"🌌",name:"EVO: Сердце первородного мира",desc:"Ультраредкий артефакт за гранью легенд",quality:"EVO",weight:0.08},
+ {icon:"🐉",name:"Ядро древнего дракона",desc:"Легендарный материал улучшения",quality:"ЛЕГЕНДАРНЫЙ",weight:12},
+ {icon:"💎",name:"Кристаллы духа ×80",desc:"Редкая валюта",quality:"ЛЕГЕНДАРНЫЙ",weight:10},
+ {icon:"⚡",name:"Печать небесной молнии",desc:"Материал пробуждения",quality:"ЭПИЧЕСКИЙ",weight:20},
+ {icon:"🔮",name:"Кристалл духа ×12",desc:"Усиливает способности",quality:"ЭПИЧЕСКИЙ",weight:24},
+ {icon:"📜",name:"Свитки опыта ×35",desc:"Опыт для будущих улучшений",quality:"РЕДКИЙ",weight:34}
+];
+function shop(){$(".app").classList.remove("bag-open");content.innerHTML=`<div class="title">🛒 МАГАЗИН</div><div class="subtitle">Сундуки с наградами · выбирай валюту</div>
+<div class="panel" style="text-align:center;background:linear-gradient(145deg,#49301ced,#17242d);border:1px solid #d8a94f;box-shadow:0 0 22px #e6ad4233"><div id="treasureChest" class="treasure-chest">🧰</div><div class="title" style="font-size:21px;color:#ffd36b">СУНДУК ТАЙНОГО СОКРОВИЩА</div><div class="subtitle">Редкие и легендарные награды</div><div class="hero-row" style="text-align:left"><div><b>✨ Возможные награды</b><div class="sub">Материалы, кристаллы и свитки</div></div><span>🎁</span></div><div class="hero-row"><div><b>Стоимость открытия</b><div class="sub">За одно открытие</div></div><b style="color:#ffd36b">🪙 600</b></div><label for="treasureChestCount" class="sub" style="display:block;margin:12px 0 6px">Количество сундуков за раз</label><select id="treasureChestCount" class="input" style="width:100%;max-width:240px;text-align:center;font-size:17px;padding:10px;border:1px solid #d8a94f;background:#211b18;color:#fff;border-radius:10px" onchange="updateTreasureChestCost()"><option value="1">1 сундук · 600 🪙</option><option value="2">2 сундука · 1 200 🪙</option><option value="3">3 сундука · 1 800 🪙</option><option value="4">4 сундука · 2 400 🪙</option><option value="5">5 сундуков · 3 000 🪙</option></select><button class="secondary" onclick="showChestContents('treasure')" style="width:100%;margin-top:10px">🔍 ПОСМОТРЕТЬ СОДЕРЖИМОЕ</button><button class="primary" onclick="openTreasure()">🔓 ОТКРЫТЬ СУНДУКИ</button><div id="treasureChestCost" class="sub" style="margin-top:9px">Итого: 600 🪙 · Баланс: ${gold.toLocaleString('ru-RU')} 🪙</div></div>
+<div class="panel crystal-chest-panel" style="text-align:center;background:radial-gradient(ellipse at 50% 0%,#254a77,#111a32 68%);border:1px solid #69c9ff;box-shadow:0 0 28px #38aaff2b"><div class="treasure-chest crystal-chest-art" style="filter:drop-shadow(0 0 16px #55c9ff)">💠</div><div class="title" style="font-size:21px;color:#8bdcff">КРИСТАЛЛЬНЫЙ СУНДУК</div><div class="subtitle">Эксклюзивный сундук — открывается только за кристаллы</div><div class="hero-row" style="text-align:left"><div><b>💎 Премиальные награды</b><div class="sub">Повышенный шанс на эпические и легендарные предметы</div></div><span>✨</span></div><div class="hero-row"><div><b>Цена за сундук</b><div class="sub">Стоимость умножается на число открытий</div></div><b style="color:#8bdcff">💎 10</b></div><label for="crystalChestCount" class="sub" style="display:block;margin:12px 0 6px">Количество сундуков за раз</label><select id="crystalChestCount" class="input" style="width:100%;max-width:220px;text-align:center;font-size:17px;padding:10px;border:1px solid #62c8ff;background:#101d32;color:#fff;border-radius:10px" onchange="updateCrystalChestCost()"><option value="1">1 сундук · 10 💎</option><option value="2">2 сундука · 20 💎</option><option value="3">3 сундука · 30 💎</option><option value="4">4 сундука · 40 💎</option><option value="5">5 сундуков · 50 💎</option></select><button class="secondary" onclick="showChestContents('crystal')" style="width:100%;margin-top:10px;border-color:#69c9ff;color:#a9e5ff">🔍 ПОСМОТРЕТЬ СОДЕРЖИМОЕ</button><button class="primary crystal-open-btn" onclick="openCrystalChest()" style="background:linear-gradient(100deg,#1475b9,#6a4bca);box-shadow:0 0 18px #47bfff55">💎 ОТКРЫТЬ СУНДУКИ</button><div id="crystalChestCost" class="sub" style="margin-top:9px">Итого: 10 💎 · Баланс: ${gems} 💎</div></div>
+<div class="panel gear-chest-panel" style="text-align:center;background:radial-gradient(ellipse at 50% 0%,#49316d,#15172b 70%);border:1px solid #b58aff;box-shadow:0 0 28px #9a55ff2b"><div class="treasure-chest" style="font-size:66px;filter:drop-shadow(0 0 18px #b66bff)">🛡️</div><div class="title" style="font-size:21px;color:#d8b8ff">СУНДУК СНАРЯЖЕНИЯ</div><div class="subtitle">Оружие и броня разных редкостей</div><div class="hero-row" style="text-align:left"><div><b>⚔️ Что может выпасть</b><div class="sub">Броня · шлемы · штаны · ботинки · оружие</div></div><span>🎁</span></div><div class="hero-row"><div><b>Цена за сундук</b><div class="sub">Только кристаллы</div></div><b style="color:#d8b8ff">💎 25</b></div><label for="gearChestCount" class="sub" style="display:block;margin:12px 0 6px">Количество сундуков за раз</label><select id="gearChestCount" class="input" style="width:100%;max-width:220px;text-align:center;font-size:17px;padding:10px;border:1px solid #b58aff;background:#211a35;color:#fff;border-radius:10px" onchange="updateGearChestCost()"><option value="1">1 сундук · 25 💎</option><option value="2">2 сундука · 50 💎</option><option value="3">3 сундука · 75 💎</option><option value="4">4 сундука · 100 💎</option><option value="5">5 сундуков · 125 💎</option></select><button class="secondary" onclick="showChestContents('gear')" style="width:100%;margin-top:10px;border-color:#b58aff;color:#e1caff">🔍 ПОСМОТРЕТЬ СОДЕРЖИМОЕ</button><button class="primary" onclick="openGearChest()" style="background:linear-gradient(100deg,#7040b9,#b55bdb);box-shadow:0 0 18px #a45bff55">🛡️ ОТКРЫТЬ СУНДУКИ СНАРЯЖЕНИЯ</button><div id="gearChestCost" class="sub" style="margin-top:9px">Итого: 25 💎 · Баланс: ${gems} 💎</div><div class="sub" style="margin-top:8px">Редкости: обычное · редкое · эпическое · легендарное · 🌌 EVO (сверхредкое)</div></div>
+<div class="panel"><div class="team-title">📚 КОЛЛЕКЦИЯ НАГРАД</div><div class="sub" style="margin-bottom:8px">Собирай редкие сокровища. Коллекция сохраняется в этом браузере.</div>${treasureRewards.map((r,i)=>`<div class="hero-row" style="grid-template-columns:auto 1fr auto;gap:10px"><span style="font-size:29px">${treasureCollection[i]?r.icon:'❔'}</span><div><b>${treasureCollection[i]?r.name:'Неизвестная награда'}</b><div class="rarity">${treasureCollection[i]?r.quality:'???'}</div><div class="sub">${treasureCollection[i]?r.desc:'Открой сундук, чтобы обнаружить эту награду.'}</div></div><b style="color:#ffd36b">×${treasureCollection[i]||0}</b></div>`).join('')}</div><button class="secondary" style="width:100%;margin-top:12px" onclick="bag()">🎒 К СУМКЕ</button>`;}
+function showChestContents(kind){
+ const isGear=kind==='gear', isCrystal=kind==='crystal';
+ const title=isGear?'🛡️ СОДЕРЖИМОЕ СУНДУКА СНАРЯЖЕНИЯ':isCrystal?'💎 СОДЕРЖИМОЕ КРИСТАЛЛЬНОГО СУНДУКА':'🧰 СОДЕРЖИМОЕ СУНДУКА ТАЙНОГО СОКРОВИЩА';
+ const source=isGear?gearChestPool:treasureRewards;
+ const total=isGear?source.reduce((a,x)=>a+x.weight,0):source.reduce((a,x)=>a+(isCrystal?(x.quality==='EVO'?0.05:x.quality==='ЛЕГЕНДАРНЫЙ'?24:x.quality==='ЭПИЧЕСКИЙ'?34:x.quality==='РЕДКИЙ'?28:14):x.weight),0);
+ const qualityClass=q=>{q=String(q).toUpperCase();return q.includes('EVO')?'evo':q.includes('ЛЕГЕНДАР')?'legendary':q.includes('ЭПИЧ')?'epic':q.includes('РЕДК')?'rare':''};
+ const rows=source.map(r=>{const weight=isGear?r.weight:(isCrystal?(r.quality==='EVO'?0.05:r.quality==='ЛЕГЕНДАРНЫЙ'?24:r.quality==='ЭПИЧЕСКИЙ'?34:r.quality==='РЕДКИЙ'?28:14):r.weight);const chance=(weight/total*100).toFixed(1);return `<div class="crystal-reward-card ${qualityClass(r.quality)}" style="opacity:1;animation:none;min-height:150px"><div class="crystal-card-icon">${r.icon}</div><b>${r.name}</b><small>${r.quality}</small><small>${isGear?`${r.slotName} · +${r.power} к силе`:r.desc}</small><small style="color:#d6e9ff">Шанс: ${chance}%</small></div>`}).join('');
+ const old=document.getElementById('chestContentsOverlay');if(old)old.remove();
+ const overlay=document.createElement('div');overlay.id='chestContentsOverlay';overlay.className='case-overlay crystal-case-overlay';
+ overlay.innerHTML=`<div class="case-heading">${title}</div><div class="case-subtitle">Все возможные награды и примерные шансы выпадения</div><div class="crystal-results-grid" style="max-height:58vh">${rows}</div><button class="primary" style="max-width:360px" onclick="document.getElementById('chestContentsOverlay')?.remove()">ЗАКРЫТЬ</button>`;
+ overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});document.body.appendChild(overlay);
+}
+function updateCrystalChestCost(){const sel=document.getElementById('crystalChestCount');const out=document.getElementById('crystalChestCost');if(sel&&out){const n=Math.max(1,Math.min(5,Number(sel.value)||1));out.textContent=`Итого: ${n*10} 💎 · Баланс: ${gems} 💎`;}}
+function rollCrystalReward(){const pool=treasureRewards.map((r,i)=>({r,i,weight:r.quality==='EVO'?0.05:r.quality==='ЛЕГЕНДАРНЫЙ'?24:r.quality==='ЭПИЧЕСКИЙ'?34:r.quality==='РЕДКИЙ'?28:14}));const total=pool.reduce((a,x)=>a+x.weight,0);let roll=Math.random()*total;for(const x of pool){roll-=x.weight;if(roll<=0)return x.i;}return pool[0].i;}
+function grantTreasureReward(index){const r=treasureRewards[index];treasureCollection[index]=(treasureCollection[index]||0)+1;let text=r.name;if(r.name.includes('Кристаллы духа ×80')){gems+=80;text='+80 кристаллов';}else if(r.name.includes('Свитки опыта ×35')){const it=inventoryItems.find(x=>x.name==='Свиток опыта');if(it)it.qty+=35;else inventoryItems.push({name:'Свиток опыта',icon:'📜',qty:35,quality:'Редкий',grade:2,desc:'Свитки опыта'});text='Свитки опыта ×35';}else if(r.name.includes('Кристалл духа ×12')){const it=inventoryItems.find(x=>x.name==='Кристалл духа');if(it)it.qty+=12;else inventoryItems.push({name:'Кристалл духа',icon:'🔮',qty:12,quality:'Эпический',grade:3,desc:'Кристаллы духа'});text='Кристалл духа ×12';}else{let it=inventoryItems.find(x=>x.name===r.name);if(it)it.qty+=1;else inventoryItems.push({name:r.name,icon:r.icon,qty:1,quality:r.quality.charAt(0)+r.quality.slice(1).toLowerCase(),grade:r.quality==='EVO'?5:4,desc:r.desc});}return {r,text};}
+function chestRarityRank(value){const s=String(value??'').toUpperCase();if(s==='5'||s.includes('EVO'))return 5;if(s==='4'||s.includes('ЛЕГЕНДАР'))return 4;if(s==='3'||s.includes('ЭПИЧ'))return 3;if(s==='2'||s.includes('РЕДК'))return 2;return 1;}
+function chestRevealDelay(i){return (0.35+i*0.82).toFixed(2)+'s';}
+function openCrystalChest(){const sel=document.getElementById('crystalChestCount');const count=Math.max(1,Math.min(5,Number(sel?.value)||1));if(backpackFull(count*35))return;const cost=count*10;if(gems<cost){message('Не хватает кристаллов',`Для открытия ${count} сундук(ов) нужно ${cost} кристаллов. На балансе ${gems} 💎.`);return;}gems-=cost;update();const results=Array.from({length:count},()=>grantTreasureReward(rollCrystalReward()));results.sort((a,b)=>chestRarityRank(b.r.quality)-chestRarityRank(a.r.quality));try{localStorage.setItem('rcard_treasure_collection',JSON.stringify(treasureCollection));}catch(e){}update();const overlay=document.createElement('div');overlay.className='case-overlay crystal-case-overlay';overlay.id='crystalCaseOverlay';overlay.innerHTML=`<div class="case-heading" style="color:#8bdcff;text-shadow:0 0 18px #39aaff">💎 КРИСТАЛЛЬНОЕ ОТКРЫТИЕ · ${count}×</div><div class="case-opening-art" style="filter:drop-shadow(0 0 26px #4ac7ff)">💠</div><div class="case-subtitle">Кристаллы рассыпаются — награды раскрываются…</div><div id="crystalResults" class="crystal-results-grid">${results.map((x,i)=>`<div class="crystal-reward-card ${x.r.quality==='EVO'?'evo':x.r.quality==='EVO'?'evo':x.r.quality==='ЛЕГЕНДАРНЫЙ'?'legendary':x.r.quality==='ЭПИЧЕСКИЙ'?'epic':x.r.quality==='РЕДКИЙ'?'rare':''}" style="--delay:${chestRevealDelay(i)}"><div class="crystal-card-icon">${x.r.icon}</div><b>${x.text}</b><small>${x.r.quality}</small></div>`).join('')}</div><div class="case-subtitle">Потрачено ${cost} 💎 · Наград: ${count}</div><button class="primary" style="max-width:360px;background:linear-gradient(100deg,#1475b9,#6a4bca)" onclick="finishCrystalReveal()">ЗАБРАТЬ НАГРАДЫ</button>`;document.body.appendChild(overlay);launchChestCinematic(overlay,results.some(x=>x.r.quality==='EVO')?'evo':results.some(x=>x.r.quality==='EVO')?'evo':results.some(x=>x.r.quality==='ЛЕГЕНДАРНЫЙ')?'legendary':results.some(x=>x.r.quality==='ЭПИЧЕСКИЙ')?'epic':results.some(x=>x.r.quality==='РЕДКИЙ')?'rare':'common');if(results.some(x=>x.r.quality==='EVO')){overlay.classList.add('evo-hit');spawnLegendaryParticles('evo')}else if(results.some(x=>x.r.quality==='EVO')){overlay.classList.add('evo-hit');spawnLegendaryParticles('evo')}else if(results.some(x=>x.r.quality==='ЛЕГЕНДАРНЫЙ')){overlay.classList.add('legendary-hit');spawnLegendaryParticles('legendary')}else if(results.some(x=>x.r.quality==='ЭПИЧЕСКИЙ'))spawnLegendaryParticles('epic');else spawnLegendaryParticles('rare');}
+function finishCrystalReveal(){const overlay=document.getElementById('crystalCaseOverlay');if(overlay)overlay.remove();document.querySelectorAll('.legendary-particle').forEach(p=>p.remove());update();shop();}
+function updateTreasureChestCost(){const sel=document.getElementById('treasureChestCount');const out=document.getElementById('treasureChestCost');if(sel&&out){const n=Math.max(1,Math.min(5,Number(sel.value)||1));out.textContent=`Итого: ${(n*600).toLocaleString('ru-RU')} 🪙 · Баланс: ${gold.toLocaleString('ru-RU')} 🪙`;}}
+function launchChestCinematic(overlay, rarity='rare'){
+ overlay.classList.add('chest-cinematic');
+ const colors={evo:'#80fff3',legendary:'#ffd36b',epic:'#c58aff',rare:'#65cfff',common:'#cbd6dc'};
+ const color=colors[rarity]||colors.rare;overlay.style.setProperty('--chest-ring',color);overlay.style.setProperty('--chest-aura',color+'30');
+ const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduced)return;
+ const count=rarity==='evo'?80:rarity==='legendary'?44:rarity==='epic'?32:22;
+ for(let i=0;i<count;i++){const spark=document.createElement('i');spark.className='chest-fx-spark';spark.style.setProperty('--spark-color',color);spark.style.setProperty('--x',(35+Math.random()*30)+'vw');spark.style.setProperty('--y',(35+Math.random()*38)+'vh');spark.style.setProperty('--size',(5+Math.random()*12)+'px');spark.style.setProperty('--dx',((Math.random()-.5)*440)+'px');spark.style.setProperty('--dy',(-70-Math.random()*420)+'px');spark.style.setProperty('--dur',(1+Math.random()*1.6)+'s');document.body.appendChild(spark);setTimeout(()=>spark.remove(),2900)}
+}
+function openTreasure(){
+ const sel=document.getElementById('treasureChestCount');const count=Math.max(1,Math.min(5,Number(sel?.value)||1));
+ if(backpackFull(count*35))return;
+ const cost=count*600;if(gold<cost){message('Не хватает золота',`Для открытия ${count} сундук(ов) нужно ${cost.toLocaleString('ru-RU')} золота. На балансе ${gold.toLocaleString('ru-RU')} 🪙.`);return;}
+ gold-=cost;update();
+ const results=Array.from({length:count},()=>{const total=treasureRewards.reduce((sum,r)=>sum+r.weight,0);let roll=Math.random()*total;let reward=treasureRewards[0];for(const r of treasureRewards){roll-=r.weight;if(roll<=0){reward=r;break}}const index=treasureRewards.indexOf(reward);return {...grantTreasureReward(index),index};});results.sort((a,b)=>chestRarityRank(b.r.quality)-chestRarityRank(a.r.quality));
+ try{localStorage.setItem('rcard_treasure_collection',JSON.stringify(treasureCollection));}catch(e){}update();
+ const overlay=document.createElement('div');overlay.className='case-overlay';overlay.id='caseOverlay';
+ const rarityClass=r=>r.quality==='EVO'?'evo':r.quality==='ЛЕГЕНДАРНЫЙ'?'legendary':r.quality==='ЭПИЧЕСКИЙ'?'epic':r.quality==='РЕДКИЙ'?'rare':'';
+ overlay.innerHTML=`<div class="case-heading">🔓 ОТКРЫТИЕ ТАЙНЫХ СОКРОВИЩ · ${count}×</div><div class="case-opening-art" aria-hidden="true">🧰</div><div class="case-subtitle">Сундуки открываются…</div><div class="crystal-results-grid">${results.map((x,i)=>`<div class="crystal-reward-card ${rarityClass(x.r)}" style="--delay:${chestRevealDelay(i)};border-color:${x.r.quality==='ЛЕГЕНДАРНЫЙ'?'#ffd45d':'inherit'}"><div class="crystal-card-icon">${x.r.icon}</div><b>${x.text}</b><small>${x.r.quality}</small></div>`).join('')}</div><div class="case-subtitle">Потрачено ${cost.toLocaleString('ru-RU')} 🪙 · Наград: ${count}</div><button class="primary" style="max-width:360px" onclick="finishTreasureReveal()">ПРОДОЛЖИТЬ</button>`;
+ document.body.appendChild(overlay);launchChestCinematic(overlay,results.some(x=>x.r.quality==='EVO')?'evo':results.some(x=>x.r.quality==='EVO')?'evo':results.some(x=>x.r.quality==='ЛЕГЕНДАРНЫЙ')?'legendary':results.some(x=>x.r.quality==='ЭПИЧЕСКИЙ')?'epic':'rare');if(results.some(x=>x.r.quality==='EVO')){overlay.classList.add('evo-hit');spawnLegendaryParticles('evo')}else if(results.some(x=>x.r.quality==='EVO')){overlay.classList.add('evo-hit');spawnLegendaryParticles('evo')}else if(results.some(x=>x.r.quality==='ЛЕГЕНДАРНЫЙ')){overlay.classList.add('legendary-hit');spawnLegendaryParticles('legendary')}else if(results.some(x=>x.r.quality==='ЭПИЧЕСКИЙ'))spawnLegendaryParticles('epic');else if(results.some(x=>x.r.quality==='РЕДКИЙ'))spawnLegendaryParticles('rare');
+}
+function spawnLegendaryParticles(rarity='legendary'){
+ const symbols=['✦','✧','✨','★','◆','✺'];const count=rarity==='evo'?72:rarity==='legendary'?42:rarity==='epic'?27:16;
+ const color=rarity==='evo'?'#86fff4':rarity==='legendary'?'#ffdf72':rarity==='epic'?'#d9a0ff':'#83d8ff';
+ for(let i=0;i<count;i++){const p=document.createElement('span');p.className='legendary-particle';p.textContent=symbols[Math.floor(Math.random()*symbols.length)];p.style.color=color;p.style.textShadow=`0 0 10px ${color}`;p.style.left=(Math.random()*100)+'vw';p.style.top=(45+Math.random()*50)+'vh';p.style.setProperty('--dur',(1.3+Math.random()*1.8)+'s');p.style.setProperty('--size',(12+Math.random()*24)+'px');document.body.appendChild(p);setTimeout(()=>p.remove(),3400)}
+}
+function finishTreasureReveal(){const overlay=document.getElementById('caseOverlay');if(overlay)overlay.remove();document.querySelectorAll('.legendary-particle').forEach(p=>p.remove());shop();}
+
+
+const gearChestPool=[
+ {slot:'weapon',slotName:'Эволюционное оружие',icon:'🗡️',name:'EVO — Клинок первородного мира',quality:'EVO',grade:5,power:88,weight:0.025,id:'g_evo_origin'},
+ {slot:'armor',slotName:'Эволюционная броня',icon:'🛡️',name:'EVO — Панцирь звёздного дракона',quality:'EVO',grade:5,power:82,weight:0.018,id:'g_evo_armor'},
+ {slot:'helmet',slotName:'Эволюционный шлем',icon:'👹',name:'EVO — Маска небесного стража',quality:'EVO',grade:5,power:66,weight:0.016,id:'g_evo_helmet'},
+ {slot:'pants',slotName:'Эволюционные поножи',icon:'🥋',name:'EVO — Поножи разлома',quality:'EVO',grade:5,power:61,weight:0.016,id:'g_evo_pants'},
+ {slot:'boots',slotName:'Эволюционные ботинки',icon:'🥾',name:'EVO — Сапоги пустотного шага',quality:'EVO',grade:5,power:58,weight:0.016,id:'g_evo_boots'},
+ {slot:'weapon',slotName:'Оружие',icon:'⚔️',name:'Кунай странника',quality:'Обычный',grade:1,power:4,weight:34,id:'g_kunai'},
+ {slot:'boots',slotName:'Ботинки',icon:'🥾',name:'Сандалии шиноби',quality:'Обычный',grade:1,power:2,weight:30,id:'g_sandals'},
+ {slot:'pants',slotName:'Штаны',icon:'👖',name:'Штаны разведчика',quality:'Редкий',grade:2,power:6,weight:20,id:'g_scoutpants'},
+ {slot:'helmet',slotName:'Шлем',icon:'⛑️',name:'Стальной шлем стража',quality:'Редкий',grade:2,power:8,weight:18,id:'g_guardhelm'},
+ {slot:'armor',slotName:'Броня',icon:'🦺',name:'Кираса синего пламени',quality:'Эпический',grade:3,power:15,weight:12,id:'g_bluearmor'},
+ {slot:'weapon',slotName:'Оружие',icon:'🗡️',name:'Катана грозы',quality:'Эпический',grade:3,power:19,weight:10,id:'g_stormkatana'},
+ {slot:'boots',slotName:'Ботинки',icon:'🥾',name:'Сапоги лунного шага',quality:'Эпический',grade:3,power:12,weight:9,id:'g_moonboots'},
+ {slot:'pants',slotName:'Штаны',icon:'👖',name:'Поножи драконьего стража',quality:'Легендарный',grade:4,power:20,weight:5,id:'g_dragonpants'},
+ {slot:'helmet',slotName:'Шлем',icon:'👹',name:'Маска золотого они',quality:'Легендарный',grade:4,power:24,weight:4,id:'g_goldenoni'},
+ {slot:'armor',slotName:'Броня',icon:'🐉',name:'Доспех древнего дракона',quality:'Легендарный',grade:4,power:32,weight:3,id:'g_dragonarmor'},
+ {slot:'weapon',slotName:'Оружие',icon:'⚔️',name:'Клинок расколотого неба',quality:'Легендарный',grade:4,power:38,weight:2,id:'g_heavensplitter'}
+];
+function updateGearChestCost(){const sel=document.getElementById('gearChestCount'),out=document.getElementById('gearChestCost');if(sel&&out){const n=Math.max(1,Math.min(5,Number(sel.value)||1));out.textContent=`Итого: ${n*25} 💎 · Баланс: ${gems} 💎`;}}
+function rollGearReward(){const total=gearChestPool.reduce((a,x)=>a+x.weight,0);let roll=Math.random()*total;for(const item of gearChestPool){roll-=item.weight;if(roll<=0)return item;}return gearChestPool[0];}
+function openGearChest(){const count=Math.max(1,Math.min(5,Number(document.getElementById('gearChestCount')?.value)||1));if(backpackFull(count))return;const cost=count*25;if(gems<cost){message('Не хватает кристаллов',`Для ${count} сундук(ов) снаряжения нужно ${cost} 💎. На балансе ${gems} 💎.`);return;}gems-=cost;const results=[];for(let i=0;i<count;i++){const r=rollGearReward();const existing=inventoryItems.find(x=>x.gearId===r.id);if(existing)existing.qty++;else inventoryItems.push({name:r.name,icon:r.icon,qty:1,quality:r.quality,grade:r.grade,desc:`${r.slotName}. +${r.power} к силе`,gearSlot:r.slot,gearId:r.id,power:r.power});results.push(r);}results.sort((a,b)=>chestRarityRank(b.grade)-chestRarityRank(a.grade));update();const overlay=document.createElement('div');overlay.className='case-overlay crystal-case-overlay';overlay.id='gearCaseOverlay';const cls=r=>r.grade===5?'evo':r.grade===4?'legendary':r.grade===3?'epic':r.grade===2?'rare':'';overlay.innerHTML=`<div class="case-heading" style="color:#d8b8ff;text-shadow:0 0 18px #a45bff">🛡️ СУНДУК СНАРЯЖЕНИЯ · ${count}×</div><div class="case-opening-art" style="filter:drop-shadow(0 0 26px #b66bff)">🛡️</div><div class="case-subtitle">Магическая печать раскрывается…</div><div class="crystal-results-grid">${results.map((r,i)=>`<div class="crystal-reward-card gear-reward ${cls(r)}" style="--delay:${i*.16}s;border-color:${r.grade===5?'#8ffff2':r.grade===4?'#ffd45d':r.grade===3?'#bd72ff':r.grade===2?'#5bb8ff':'#8396a0'}"><div class="gear-art ${r.slot} ${r.grade===5?'evo':''}"><span class="gear-art-icon">${r.icon}</span></div><b>${r.name}</b><small>${r.quality.toUpperCase()} · ${r.slotName}</small><small>+${r.power} к силе</small></div>`).join('')}</div><div class="case-subtitle">Потрачено ${cost} 💎 · Предметов: ${count}</div><button class="primary" style="max-width:360px;background:linear-gradient(100deg,#7040b9,#b55bdb)" onclick="document.getElementById('gearCaseOverlay')?.remove();shop()">ЗАВЕРШИТЬ</button>`;document.body.appendChild(overlay);launchChestCinematic(overlay,results.some(r=>r.grade===5)?'evo':results.some(r=>r.grade===4)?'legendary':results.some(r=>r.grade===3)?'epic':results.some(r=>r.grade===2)?'rare':'common');if(results.some(r=>r.grade===5)){overlay.classList.add('evo-hit');spawnLegendaryParticles('evo')}else if(results.some(r=>r.grade===4)){overlay.classList.add('legendary-hit');spawnLegendaryParticles('legendary')}else if(results.some(r=>r.grade===3))spawnLegendaryParticles('epic');else spawnLegendaryParticles('rare');}
+
+const equipmentSlots=[
+ {id:'armor',name:'Броня',icon:'🦺',items:[['none','Без брони',0],['cloth','Боевая туника',3],['iron','Кираса ниндзя',8],['shadow','Доспех теней',15],['dragon','Доспех дракона',25]]},
+ {id:'helmet',name:'Шлем',icon:'⛑️',items:[['none','Без шлема',0],['headband','Защитная повязка',2],['steelhelm','Стальной шлем',5],['oni','Маска они',10],['dragonhelm','Шлем дракона',16]]},
+ {id:'pants',name:'Штаны',icon:'👖',items:[['none','Без штанов',0],['shinobi','Штаны шиноби',2],['reinforced','Усиленные штаны',5],['shadowpants','Штаны теней',9],['dragonpants','Штаны дракона',14]]},
+ {id:'boots',name:'Ботинки',icon:'🥾',items:[['none','Без ботинок',0],['sandals','Сандалии ниндзя',1],['swift','Ботинки скорости',4],['silent','Бесшумные сапоги',8],['stormboots','Сапоги бури',12]]},
+ {id:'weapon',name:'Оружие',icon:'⚔️',items:[['none','Без оружия',0],['kunai','Кунай',4],['katana','Катана',9],['chakra','Клинок чакры',16],['dragonblade','Клинок дракона',28]]}
+];
+let equippedGear={};try{equippedGear=JSON.parse(localStorage.getItem('rcard_equipped_gear')||'{}')||{}}catch(e){equippedGear={}}
+function equipment(){$(".app").classList.remove("bag-open");equipmentSlots.forEach(slot=>{slot.items=slot.items.filter(i=>!String(i[0]).startsWith('loot:'));inventoryItems.filter(x=>x.gearSlot===slot.id&&x.qty>0).forEach(x=>slot.items.push(['loot:'+x.gearId,x.name,Number(x.power)||0,x.icon,x.quality,x.gearSlot]));});const total=equipmentSlots.reduce((n,s)=>n+(s.items.find(i=>i[0]===(equippedGear[s.id]||'none'))?.[2]||0),0);content.innerHTML=`<div class="title">🛡️ СНАРЯЖЕНИЕ</div><div class="subtitle">Подбери экипировку ниндзя и усили свой отряд</div><div class="panel"><div class="hero-row"><div><b>⚔️ Бонус экипировки</b><div class="sub">Суммарная сила выбранных предметов</div></div><b style="color:#8de0b9">+${total} силы</b></div><div class="equipment-grid">${equipmentSlots.map(slot=>{const selected=equippedGear[slot.id]||'none';const item=slot.items.find(i=>i[0]===selected)||slot.items[0];return `<div class="equipment-slot ${item[4]==='EVO'?'evo-equipped':''}"><div class="slot-art"><span>${item[3]||slot.icon}</span></div><h3>${slot.name.toUpperCase()}</h3><div class="equipped-name">${item[1]}</div><div class="equipment-bonus">${item[2]?'+'+item[2]+' к силе':'Без бонуса'}${item[4]==='EVO'?' · <b style="color:#bafff7">EVO</b>':''}</div><select aria-label="Выбрать: ${slot.name}" onchange="equipItem('${slot.id}',this.value)">${slot.items.map(i=>`<option value="${i[0]}" ${i[0]===selected?'selected':''}>${i[1]}${i[2]?' (+'+i[2]+')':''}</option>`).join('')}</select></div>`}).join('')}</div><div class="sub" style="margin-top:12px">Выбор сохраняется автоматически. В этой версии доступен тестовый набор экипировки.</div></div><button class="secondary" style="width:100%;margin-top:10px" onclick="home()">← В главное меню</button>`}
+function equipItem(slotId,itemId){const slot=equipmentSlots.find(s=>s.id===slotId);if(!slot||!slot.items.some(i=>i[0]===itemId))return;equippedGear[slotId]=itemId;try{localStorage.setItem('rcard_equipped_gear',JSON.stringify(equippedGear))}catch(e){}equipment()}
+
+function bag(){
+ $(".app").classList.add("bag-open");
+ content.innerHTML=`<div class="title">🎒 РЮКЗАК</div>
+ <div class="panel">
+  <div class="sub" style="margin-top:8px">🎒 Вместимость рюкзака: <b>${inventoryCount()}/${BACKPACK_CAPACITY}</b> предметов</div><div class="bar"><i style="width:${Math.min(100,inventoryCount()/BACKPACK_CAPACITY*100)}%;background:${inventoryCount()>=BACKPACK_CAPACITY?"#e35d50":"#56c9a5"}"></i></div>
+ </div>
+ <div class="panel" style="margin-top:12px">
+  <div class="team-title">ПРЕДМЕТЫ · ${inventoryItems.length} ВИДОВ · ${inventoryCount()}/${BACKPACK_CAPACITY}</div>
+  <label for="bagSort" class="sub" style="display:block;margin:8px 0 5px">Сортировать предметы</label>
+  <select id="bagSort" onchange="renderInventory(this.value)" style="width:100%;padding:11px;border-radius:9px;background:#172b35;color:#fff;border:1px solid #657c85;font-weight:700">
+   <option value="qtyDesc">Количество: больше → меньше</option>
+   <option value="qtyAsc">Количество: меньше → больше</option>
+   <option value="qualityDesc">Качество: лучше → хуже</option>
+   <option value="qualityAsc">Качество: хуже → лучше</option>
+  </select>
+  <div id="inventoryList"></div>
+ </div>`;
+ renderInventory("qtyDesc");
+}
+function renderInventory(sort){
+ const list=$("#inventoryList");
+ if(!list)return;
+ const items=[...inventoryItems];
+ if(sort==="qtyDesc")items.sort((a,b)=>b.qty-a.qty);
+ if(sort==="qtyAsc")items.sort((a,b)=>a.qty-b.qty);
+ if(sort==="qualityDesc")items.sort((a,b)=>b.grade-a.grade||b.qty-a.qty);
+ if(sort==="qualityAsc")items.sort((a,b)=>a.grade-b.grade||b.qty-a.qty);
+ list.innerHTML=items.map(item=>`<div class="hero-row bag-item-card bag-quality-${item.grade||1} ${item.gearSlot?'gear-inventory-item':''} ${item.quality==='EVO'?'evo':''}" style="grid-template-columns:auto 1fr auto;gap:10px;margin-top:9px">
+  <div class="bag-item-icon">${item.icon}</div>
+  <div><b>${item.name}</b><div class="rarity">${item.quality.toUpperCase()}</div><div class="sub">${item.desc||"Полученный предмет"}</div></div>
+  <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px"><div class="sub">Кол-во</div><b>×${item.qty}</b><button class="secondary" style="padding:6px 8px;font-size:11px" onclick="sellInventoryItem('${item.name.replace(/'/g,"\\'")}')">Продать ×1</button><button class="secondary" style="padding:5px 7px;font-size:10px;background:#74423a" onclick="sellInventoryItem('${item.name.replace(/'/g,"\\'")}',true)">Продать всё</button><small class="sub">${Math.max(1,(Number(item.grade)||1)*12)} 🪙/шт.</small></div>
+ </div>`).join("")||`<div class="sub" style="padding:18px;text-align:center">Пока нет предметов. Открывай сундуки и получай награды!</div>`;
+}
+
+function recruit(){let i=Math.floor(Math.random()*ninjaData.length);if(!team.includes(i)&&team.length<5)team.push(i);else gold+=100;update();message("Набор ниндзя","Ты получил: "+ninjaData[i].name+"!<br>"+ninjaData[i].rarity);home();}
+function battle(){$(".app").classList.remove("bag-open");
+ let playerMax=team.reduce((s,i)=>s+ninjaData[i].hp,0),enemyMax=team.length*1700;
+ let player=playerMax,enemy=enemyMax,round=0,done=false;
+ const botName="Теневой клон";
+ content.innerHTML=`<div class="title">⚔️ СРАЖЕНИЕ</div><div class="subtitle">Твой отряд против бота</div>
+ <div class="panel">
+ <div class="fighter-line">
+  <div class="fighter" id="playerfighter"><div class="portrait">${heroIcon(ninjaData[team[0]].name)}</div><div class="fighter-name">ТВОЙ ОТРЯД</div><div class="sub">${ninjaData[team[0]].name} + ещё ${team.length-1}</div><div class="fighter-hp"><i id="php" style="width:100%"></i></div><div id="phptext" class="sub">${player} / ${playerMax} HP</div></div>
+  <div class="vs-mark">VS</div>
+  <div class="fighter enemy" id="enemyfighter"><div class="portrait">👹</div><div class="fighter-name">${botName}</div><div class="sub">БОТ · ИИ</div><div class="fighter-hp"><i id="ehp" style="width:100%"></i></div><div id="ehptext" class="sub">${enemy} / ${enemyMax} HP</div></div>
+ </div>
+ <div id="battlelog" class="battle-log">Обе стороны готовы! Нажми кнопку, чтобы начать обмен ударами.</div>
+ <button id="fight" class="primary" onclick="runBattle()">🥷 АТАКОВАТЬ</button>
+ <button class="secondary" style="width:100%;margin-top:12px" onclick="battle()">🔄 НОВЫЙ БОЙ</button>
+ </div>`;
+ window.runBattle=()=>{
+  if(done)return;
+  round++;
+  const dmg=Math.round(team.reduce((s,i)=>s+ninjaData[i].power/2+Math.random()*100,0));
+  const edmg=Math.round(400+Math.random()*550);
+  const pf=$("#playerfighter"),ef=$("#enemyfighter");
+  pf.classList.remove("attacking","hit");ef.classList.remove("attacking","hit");void pf.offsetWidth;void ef.offsetWidth;
+  pf.classList.add("attacking");ef.classList.add("hit");
+  let pop= document.createElement("div");pop.className="damage-pop";pop.textContent="-"+dmg;ef.append(pop);
+  enemy=Math.max(0,enemy-dmg);
+  let lines=[`<b>Раунд ${round}</b>`,`⚔️ ${ninjaData[team[(round-1)%team.length]].name} и отряд атакуют: <b>${dmg}</b> урона.`];
+  if(enemy>0){
+   setTimeout(()=>{pf.classList.remove("attacking");ef.classList.remove("hit");ef.classList.add("attacking");pf.classList.add("hit");let p2=document.createElement("div");p2.className="damage-pop";p2.textContent="-"+edmg;pf.append(p2);setTimeout(()=>{ef.classList.remove("attacking");pf.classList.remove("hit")},350)},180);
+   player=Math.max(0,player-edmg);
+   lines.push(`💥 ${botName} контратакует и наносит <b>${edmg}</b> урона.`);
+  }
+  $("#php").style.width=(player/playerMax*100)+"%";$("#ehp").style.width=(enemy/enemyMax*100)+"%";
+  $("#phptext").textContent=player+" / "+playerMax+" HP";$("#ehptext").textContent=enemy+" / "+enemyMax+" HP";
+  if(enemy<=0||player<=0||round>=8){
+   done=true;const win=enemy<=0||(player>0&&player>=enemy);
+   if(win){gold+=250;gems+=5;wins++}else gold+=60;update();
+   lines.push(win?"<br>🏆 <b>ПОБЕДА!</b> +250 золота · +5 кристаллов":"<br>💥 <b>ПОРАЖЕНИЕ</b> +60 золота");
+   $("#fight").textContent=win?"🏆 ПОБЕДА! ЕЩЁ РАЗ":"🔄 ПОВТОРИТЬ БОЙ";
+   $("#fight").onclick=()=>battle();
+  }else $("#fight").textContent="⚔️ СЛЕДУЮЩИЙ УДАР";
+  $("#battlelog").innerHTML=lines.join("<br>");
+ };
+}
+
+let playerProfile=(()=>{
+ try{
+  const saved=JSON.parse(localStorage.getItem("rcard_player_profile")||"{}");
+  return {name:typeof saved.name==="string"?saved.name:"Новый ниндзя",
+   avatar:typeof saved.avatar==="string"?saved.avatar:"影",
+   frame:typeof saved.frame==="string"?saved.frame:"bronze",
+   level:Number.isFinite(saved.level)?saved.level:1,
+   experience:Number.isFinite(saved.experience)?saved.experience:0,
+   joined:typeof saved.joined==="string"?saved.joined:"Сегодня"};
+ }catch(e){return {name:"Новый ниндзя",avatar:"影",level:1,experience:0,joined:"Сегодня"}}
+})();
+function savePlayerProfile(){try{localStorage.setItem("rcard_player_profile",JSON.stringify(playerProfile))}catch(e){message("Не удалось сохранить аватар","Изображение слишком большое для локального хранилища. Выбери другую картинку.");}}
+function avatarMarkup(value){return typeof value==="string"&&value.startsWith("data:image/")?`<img src="${value}" alt="Аватар игрока">`:value;}
+const avatarFrames=[{id:"bronze",name:"Бронзовая",icon:"🟤",desc:"Тёплый металлический обод"},{id:"silver",name:"Серебряная",icon:"⚪",desc:"Холодное сияние"},{id:"emerald",name:"Изумрудная",icon:"🟢",desc:"Зелёная энергия"},{id:"arcane",name:"Магическая",icon:"🟣",desc:"Фиолетовая аура"},{id:"legendary",name:"Легендарная",icon:"🌟",desc:"Золотое сияние и пульсация"}];
+function applyFrameClasses(){const cls="avatar-frame-"+((playerProfile.frame)||"bronze");[document.querySelector(".profile-trigger"),document.querySelector("#profileAvatarPreview")].filter(Boolean).forEach(el=>{el.classList.remove(...avatarFrames.map(f=>"avatar-frame-"+f.id));el.classList.add(cls);});}
+function chooseAvatarFrame(id){if(!avatarFrames.some(f=>f.id===id))return;playerProfile.frame=id;savePlayerProfile();applyFrameClasses();openProfile();}
+function renderAvatar(value){const topAvatar=document.querySelector(".profile-trigger");if(topAvatar)topAvatar.innerHTML=avatarMarkup(value);const preview=document.querySelector("#profileAvatarPreview");if(preview)preview.innerHTML=avatarMarkup(value);applyFrameClasses();}
+function chooseProfileAvatar(avatar){
+ playerProfile.avatar=avatar;savePlayerProfile();renderAvatar(avatar);openProfile();
+}
+function uploadProfileAvatar(input){
+ const file=input.files&&input.files[0];if(!file)return;
+ if(!file.type.startsWith("image/")){message("Неверный файл","Выбери файл изображения, например PNG, JPG или WEBP.");input.value="";return;}
+ if(file.size>8*1024*1024){message("Файл слишком большой","Выбери изображение размером до 8 МБ.");input.value="";return;}
+ const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const canvas=document.createElement("canvas"),max=256;const scale=Math.min(1,max/Math.max(img.width,img.height));canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));const ctx=canvas.getContext("2d");ctx.drawImage(img,0,0,canvas.width,canvas.height);playerProfile.avatar=canvas.toDataURL("image/jpeg",0.82);savePlayerProfile();openProfile();renderAvatar(playerProfile.avatar);};img.onerror=()=>message("Не удалось открыть изображение","Попробуй выбрать другой файл.");img.src=reader.result;};reader.onerror=()=>message("Ошибка загрузки","Не удалось прочитать выбранный файл.");reader.readAsDataURL(file);input.value="";
+}
+function saveProfileName(){
+ const input=$("#profileNameInput");if(!input)return;
+ const name=input.value.trim();
+ if(name.length<2||name.length>18){message("Имя не подходит","Введи имя длиной от 2 до 18 символов.");return}
+ playerProfile.name=name;savePlayerProfile();
+ const topAvatar=document.querySelector(".profile-trigger");if(topAvatar)topAvatar.innerHTML=avatarMarkup(playerProfile.avatar);
+ openProfile();
+}
+function openProfile(){
+ const existing=document.querySelector(".profile-modal");if(existing)existing.remove();
+ const totalPower=team.reduce((sum,i)=>sum+ninjaData[i].power,0);
+ const totalHp=team.reduce((sum,i)=>sum+ninjaData[i].hp,0);
+ const modal=document.createElement("div");modal.className="profile-modal";
+ modal.innerHTML=`<section class="profile-card" role="dialog" aria-modal="true" aria-label="Профиль игрока">
+  <div style="display:flex;align-items:center;justify-content:space-between"><div class="team-title">ПРОФИЛЬ ИГРОКА</div><button class="secondary" onclick="this.closest('.profile-modal').remove()" aria-label="Закрыть">✕</button></div>
+  <div class="profile-top"><div class="profile-big-avatar" id="profileAvatarPreview">${avatarMarkup(playerProfile.avatar)}</div><div style="flex:1;min-width:0"><h2 style="margin:0 0 5px;overflow-wrap:anywhere">${playerProfile.name}</h2><div class="rarity">🥷 УРОВЕНЬ ${playerProfile.level}</div><div class="sub">Деревня Скрытого Пламени</div></div></div>
+  <div class="profile-stat-grid">
+   <div class="profile-stat"><span class="sub">🏆 Победы</span><b>${wins}</b></div>
+   <div class="profile-stat"><span class="sub">⚔️ Сила отряда</span><b>${totalPower.toLocaleString("ru-RU")}</b></div>
+   <div class="profile-stat"><span class="sub">❤️ Здоровье отряда</span><b>${totalHp.toLocaleString("ru-RU")}</b></div>
+   <div class="profile-stat"><span class="sub">🎴 Ниндзя в команде</span><b>${team.length}/5</b></div>
+  </div>
+  <div class="profile-section"><b>✏️ Имя игрока</b>
+   <div style="display:flex;gap:8px;margin-top:8px"><input id="profileNameInput" maxlength="18" value="${playerProfile.name.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}" placeholder="Имя игрока" style="min-width:0;flex:1;padding:10px;border-radius:9px;background:#0c1b25;color:#fff;border:1px solid #607983"><button class="secondary" onclick="saveProfileName()">СОХРАНИТЬ</button></div>
+   <div class="sub" style="margin-top:5px">От 2 до 18 символов</div>
+  </div>
+  <div class="profile-section"><b>🖼️ Своя картинка</b><p class="sub" style="margin:5px 0 9px">Загрузи JPG, PNG или WEBP. Картинка будет обрезана по размеру аватара и сохранится в этом браузере.</p><label class="primary" for="profileAvatarUpload" style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer">📷 ЗАГРУЗИТЬ КАРТИНКУ</label><input id="profileAvatarUpload" type="file" accept="image/*" onchange="uploadProfileAvatar(this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></div>
+  <div class="profile-section"><b>🎭 Или выбери готовый аватар</b><div class="avatar-picker" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+   ${["影","🥷","⚡","🛡️","🏹","🔥","🌪️","🦊","🐉","🌸","👹","🌙"].map(a=>`<button type="button" class="avatar-choice" onclick="chooseProfileAvatar('${a}')" style="width:48px;height:48px;font-size:25px;border-radius:11px;border:1px solid ${playerProfile.avatar===a?"#f3c768":"#536773"};background:${playerProfile.avatar===a?"#6a4b27":"#10232d"};color:white">${a}</button>`).join("")}
+  </div></div>
+  <div class="profile-section"><b>🛡️ Рамка аватара</b><p class="sub" style="margin:5px 0 9px">Выбери оформление в стиле игровых рангов. Рамка применяется к аватарке и сохраняется в профиле.</p><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">${avatarFrames.map(f=>`<button type="button" onclick="chooseAvatarFrame('${f.id}')" style="display:flex;align-items:center;gap:9px;text-align:left;padding:9px;border-radius:12px;border:1px solid ${playerProfile.frame===f.id?"#ffe18a":"#526773"};background:${playerProfile.frame===f.id?"#3c3322":"#0d202b"};color:#fff;cursor:pointer"><span class="avatar avatar-frame-${f.id}" style="width:42px;height:42px;min-width:42px;border-radius:11px;font-size:21px">${avatarMarkup(playerProfile.avatar)}</span><span><b style="display:block;font-size:12px">${f.icon} ${f.name}</b><small class="sub">${f.desc}</small></span></button>`).join("")}</div></div>
+  <div class="profile-section"><b>📊 Опыт</b><div class="bar" style="background:#303846"><i style="width:${Math.min(100,playerProfile.experience)}%;background:#e7b85d"></i></div><div class="sub">${playerProfile.experience}/100 XP до следующего уровня</div></div>
+  <div class="profile-section"><b>🎒 Ресурсы</b><div class="hero-row"><span>🪙 Золото</span><b>${gold.toLocaleString("ru-RU")}</b></div><div class="hero-row"><span>💎 Кристаллы</span><b>${gems}</b></div></div>
+  <button class="primary profile-close" onclick="this.closest('.profile-modal').remove()">ЗАКРЫТЬ ПРОФИЛЬ</button>
+ </section>`;
+ modal.addEventListener("click",e=>{if(e.target===modal)modal.remove()});
+ document.body.append(modal);
+ applyFrameClasses();
+}
+
+function message(title,text){let d=document.createElement("div");d.className="notice";const chestReturn=String(title).includes("СУНДУК")||String(title).includes("сундук");d.innerHTML=`<div><h2>${title}</h2><p>${text}</p>${chestReturn?`<button class="primary" onclick="this.closest('.notice').remove();shop()">↩ НАЗАД К СУНДУКУ</button>`:`<button class="primary" onclick="this.closest('.notice').remove()">ПОНЯТНО</button>`}</div>`;document.body.append(d)}
+document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>setPage(b.dataset.page)));
+
+// Онлайн-аккаунты, облачное сохранение и PvP через Socket.IO
+const ONLINE_KEYS=['rcard_wallet','rcard_inventory','rcard_treasure_collection','rcard_equipped_gear','rcard_player_profile','rcard_mailbox','rcard_menu_weather'];
+let onlineToken=localStorage.getItem('rcard_online_token')||'',onlineUser=null,onlineSocket=null,onlineDuelState=null,onlineSaveTimer=null;
+function openOnline(){const m=document.getElementById('onlineModal');m.classList.remove('online-hidden');refreshOnlineUI();if(onlineToken)connectOnlineSocket();}
+function closeOnline(){document.getElementById('onlineModal').classList.add('online-hidden')}
+function onlineStatus(t){const el=document.getElementById('onlineStatus');if(el)el.textContent=t}
+function refreshOnlineUI(){const logged=!!onlineToken&&!!onlineUser;document.getElementById('onlineAuth').classList.toggle('online-hidden',logged);document.getElementById('onlineLogged').classList.toggle('online-hidden',!logged);if(logged)document.getElementById('onlineAccountInfo').textContent=`👤 ${onlineUser.username}\n🏆 Рейтинг: ${onlineUser.rating} · Победы: ${onlineUser.wins} · Поражения: ${onlineUser.losses}`;}
+async function onlineAuthSubmit(mode){const username=document.getElementById('onlineUsername').value.trim(),password=document.getElementById('onlinePassword').value;onlineStatus('Подключаемся к серверу…');try{const r=await fetch('/api/'+(mode==='register'?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});const data=await r.json();if(!r.ok)throw new Error(data.error||'Не удалось войти.');onlineToken=data.token;onlineUser=data.user;localStorage.setItem('rcard_online_token',onlineToken);if(data.state&&Object.keys(data.state).length){ONLINE_KEYS.forEach(k=>{if(Object.prototype.hasOwnProperty.call(data.state,k))localStorage.setItem(k,JSON.stringify(data.state[k]));});location.reload();return;}await onlineSaveNow();refreshOnlineUI();connectOnlineSocket();onlineStatus(mode==='register'?'Аккаунт создан! Прогресс сохранён в облаке.':'Вход выполнен. Облачное сохранение подключено.');}catch(e){onlineStatus(e.message+' Убедись, что игра запущена на сервере RCard PvP Online.');}}
+async function onlineSaveNow(){if(!onlineToken)return;const state={};ONLINE_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!==null){try{state[k]=JSON.parse(v)}catch{}}});try{await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+onlineToken},body:JSON.stringify({state})});}catch(e){}}
+function scheduleOnlineSave(){if(!onlineToken)return;clearTimeout(onlineSaveTimer);onlineSaveTimer=setTimeout(onlineSaveNow,700)}
+const originalSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){originalSetItem.call(this,key,value);if(ONLINE_KEYS.includes(String(key)))scheduleOnlineSave()};
+async function onlineLogout(){if(onlineSocket)onlineSocket.disconnect();onlineSocket=null;onlineToken='';onlineUser=null;localStorage.removeItem('rcard_online_token');document.getElementById('onlineDuel').classList.add('online-hidden');refreshOnlineUI();onlineStatus('Ты вышел из аккаунта. Локальное сохранение на этом устройстве не удалено.');}
+function connectOnlineSocket(){if(!onlineToken||onlineSocket||typeof io!=='function'){if(typeof io!=='function')onlineStatus('Серверная часть не подключена. Запусти игру командой npm start на хостинге Node.js.');return;}onlineSocket=io({auth:{token:onlineToken}});onlineSocket.on('connect',()=>onlineStatus('🟢 Подключено к онлайн-серверу.'));onlineSocket.on('connect_error',()=>onlineStatus('Не удалось подключиться к онлайн-серверу. Проверь интернет и сервер.'));onlineSocket.on('online:error',d=>onlineStatus(d.message));onlineSocket.on('online:ready',d=>{onlineUser=d.user;refreshOnlineUI()});onlineSocket.on('match:queued',()=>onlineStatus('⏳ Ищем соперника… Оставь это окно открытым.'));onlineSocket.on('match:cancelled',()=>onlineStatus('Поиск отменён.'));onlineSocket.on('match:found',d=>{onlineDuelState=d;document.getElementById('onlineDuel').classList.remove('online-hidden');document.getElementById('onlineDuelTitle').textContent='⚔ Соперник найден!';document.getElementById('onlineDuelLog').textContent='Первый ход у '+(d.players.find(p=>p.id===d.turn)?.username||'соперника');renderOnlineDuel();onlineStatus('Матч начался! Атакуй по очереди.');});onlineSocket.on('duel:update',d=>{if(!onlineDuelState)return;onlineDuelState.hp=d.hp;onlineDuelState.turn=d.turn;document.getElementById('onlineDuelLog').textContent=`${d.attackerName} нанёс ${d.damage} урона!`;renderOnlineDuel()});onlineSocket.on('duel:message',d=>onlineStatus(d.message));onlineSocket.on('duel:finished',d=>{document.getElementById('onlineDuelLog').textContent=(d.winnerId===onlineUser?.id?'🏆 Ты победил! ':'💥 Ты проиграл. ')+`Победитель: ${d.winner}`;onlineDuelState=null;if(onlineUser&&d.ratings?.[onlineUser.id]!=null){onlineUser.rating=d.ratings[onlineUser.id];if(d.winnerId===onlineUser.id)onlineUser.wins++;else onlineUser.losses++;refreshOnlineUI()}onlineStatus('Матч завершён. Нажми «Найти соперника», чтобы сыграть снова.');});}
+function onlineFindMatch(){if(!onlineToken){onlineStatus('Сначала создай аккаунт или войди.');return;}connectOnlineSocket();if(onlineSocket)onlineSocket.emit('match:join');}
+function onlineAttack(){if(onlineSocket)onlineSocket.emit('duel:attack')}
+function renderOnlineDuel(){if(!onlineDuelState)return;const box=document.getElementById('onlineDuelPlayers');box.innerHTML=onlineDuelState.players.map(p=>{const hp=onlineDuelState.hp[p.id]??100;return `<div class="online-player"><b>${p.id===onlineUser?.id?'🟢 Ты':'🥷 '+p.username}</b><div class="online-hp"><span style="width:${hp}%"></span></div><small>HP: ${hp}/100 · Рейтинг ${p.rating}</small></div>`}).join('');const attack=document.querySelector('#onlineDuel button.primary');if(attack){attack.disabled=onlineDuelState.turn!==onlineUser?.id;attack.textContent=attack.disabled?'⌛ ХОД СОПЕРНИКА':'⚡ АТАКОВАТЬ';}}
+async function onlineLeaderboard(){try{const r=await fetch('/api/leaderboard');const d=await r.json();onlineStatus('🏆 РЕЙТИНГ ИГРОКОВ\n'+(d.players.length?d.players.slice(0,15).map((p,i)=>`${i+1}. ${p.username} — ${p.rating} очков · ${p.wins} побед`).join('\n'):'Пока игроков нет.'));}catch(e){onlineStatus('Не удалось загрузить рейтинг.');}}
+if(onlineToken){fetch('/api/me',{headers:{Authorization:'Bearer '+onlineToken}}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(d=>{onlineUser=d.user;refreshOnlineUI()}).catch(()=>{onlineToken='';localStorage.removeItem('rcard_online_token');refreshOnlineUI()});}
+home();update();updateMailBadge();applyWeather(currentWeather);const savedAvatarButton=document.querySelector(".profile-trigger");if(savedAvatarButton)savedAvatarButton.innerHTML=avatarMarkup(playerProfile.avatar);applyFrameClasses();
+</script></body></html>
